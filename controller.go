@@ -307,7 +307,7 @@ func (g *Game) cache(c *gin.Context) error {
 		return err
 	}
 	item.Value = v
-	return memcache.Set(c, item)
+	return memcache.Set(appengine.NewContext(c.Request), item)
 }
 
 func wrap(s *stats.Stats, cs contest.Contests) ([]*datastore.Key, []interface{}) {
@@ -414,7 +414,7 @@ func Create(prefix string) gin.HandlerFunc {
 		g := New(c, 0)
 		withGame(c, g)
 
-		err := g.FromParams(c, g.Type)
+		err := g.FromForm(c, g.Type)
 		if err != nil {
 			log.Errorf(err.Error())
 			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
@@ -446,7 +446,9 @@ func Create(prefix string) gin.HandlerFunc {
 		_, err = dsClient.RunInTransaction(c, func(tx *datastore.Transaction) error {
 			m := mlog.New(k.ID)
 
-			ks := []*datastore.Key{m.Key, g.Key}
+			log.Debugf("m.Key: %v", m.Key)
+			log.Debugf("g.Key: %v", k)
+			ks := []*datastore.Key{m.Key, k}
 			es := []interface{}{m, g.Header}
 			_, err := tx.PutMulti(ks, es)
 			return err
@@ -575,7 +577,7 @@ func mcGet(c *gin.Context, g *Game) error {
 	defer log.Debugf("Exiting")
 
 	mkey := g.GetHeader().UndoKey(c)
-	item, err := memcache.Get(c, mkey)
+	item, err := memcache.Get(appengine.NewContext(c.Request), mkey)
 	if err != nil {
 		return err
 	}
