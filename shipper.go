@@ -1,7 +1,6 @@
 package indonesia
 
 import (
-	"fmt"
 	"html/template"
 
 	"github.com/SlothNinja/color"
@@ -69,7 +68,6 @@ func (ss Shippers) copy() Shippers {
 }
 
 func (s *Shipper) Owner() *Player {
-	fmt.Printf("Shipper: %#v\n", s)
 	return s.g.PlayerByID(s.OwnerID)
 }
 
@@ -86,7 +84,6 @@ func (s *Shipper) Company() *Company {
 }
 
 func (s *Shipper) HullSize() int {
-	fmt.Printf("Shipper: %#v\n", s)
 	if company := s.Company(); company == nil {
 		return 0
 	} else {

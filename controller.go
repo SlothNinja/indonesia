@@ -182,14 +182,10 @@ func Update(prefix string) gin.HandlerFunc {
 
 		switch jData := jsonFrom(c); {
 		case jData != nil && template == "json":
-			log.Debugf("jData: %v", jData)
-			log.Debugf("template: %v", template)
 			c.JSON(http.StatusOK, jData)
 		case template == "":
-			log.Debugf("template: %v", template)
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 		default:
-			log.Debugf("template: %v", template)
 			cu := user.CurrentFrom(c)
 
 			d := gin.H{
@@ -202,7 +198,6 @@ func Update(prefix string) gin.HandlerFunc {
 				"Notices":   restful.NoticesFrom(c),
 				"Errors":    restful.ErrorsFrom(c),
 			}
-			log.Debugf("d: %#v", d)
 			c.HTML(http.StatusOK, template, d)
 		}
 	}
@@ -279,7 +274,7 @@ func (g *Game) saveWith(c *gin.Context, ks []*datastore.Key, es []interface{}) e
 		}
 		return err
 	})
-	return nil
+	return err
 }
 
 func (g *Game) encode(c *gin.Context) (err error) {
@@ -445,9 +440,6 @@ func Create(prefix string) gin.HandlerFunc {
 
 		_, err = dsClient.RunInTransaction(c, func(tx *datastore.Transaction) error {
 			m := mlog.New(k.ID)
-
-			log.Debugf("m.Key: %v", m.Key)
-			log.Debugf("g.Key: %v", k)
 			ks := []*datastore.Key{m.Key, k}
 			es := []interface{}{m, g.Header}
 			_, err := tx.PutMulti(ks, es)
@@ -532,14 +524,12 @@ func Fetch(c *gin.Context) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 	// create Gamer
-	log.Debugf("hid: %v", c.Param("hid"))
 	id, err := strconv.ParseInt(c.Param("hid"), 10, 64)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	log.Debugf("id: %v", id)
 	g := New(c, id)
 	t := g.Type
 
@@ -561,10 +551,7 @@ func Fetch(c *gin.Context) {
 				return
 			}
 		}
-		log.Debugf("g: %#v", g)
-		log.Debugf("k: %v", g.Key)
 		if err := dsGet(c, g); err != nil {
-			log.Debugf("dsGet error: %v", err)
 			c.Redirect(http.StatusSeeOther, homePath)
 			return
 		}
@@ -626,13 +613,11 @@ func dsGet(c *gin.Context, g *Game) error {
 	}
 
 	if err := g.init(c); err != nil {
-		log.Debugf("g.init error: %v", err)
 		restful.AddErrorf(c, err.Error())
 		return err
 	}
 
 	cm := g.ColorMapFor(user.CurrentFrom(c))
-	log.Debugf("cm: %#v", cm)
 	color.WithMap(withGame(c, g), cm)
 	return nil
 }

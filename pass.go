@@ -21,7 +21,7 @@ func (g *Game) pass(c *gin.Context) (tmpl string, act game.ActionType, err error
 	defer log.Debugf("Exiting")
 
 	if err = g.validatePass(c); err != nil {
-		log.Debugf(err.Error())
+		log.Errorf(err.Error())
 		tmpl, act = "indonesia/flash_notice", game.None
 		return
 	}

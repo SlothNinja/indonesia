@@ -18,19 +18,14 @@ func Finish(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
-		defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 
 		g := gameFrom(c)
 		oldCP := g.CurrentPlayer()
 
-		var (
-			s   *stats.Stats
-			cs  contest.Contests
-			err error
-		)
-
-		if s, cs, err = g.finishTurn(c); err != nil {
+		s, cs, err := g.finishTurn(c)
+		if err != nil {
 			log.Errorf(err.Error())
+			defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
 
@@ -40,24 +35,36 @@ func Finish(prefix string) gin.HandlerFunc {
 			g.Status = game.Completed
 			ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), cs)
 			err = g.saveWith(c, ks, es)
-			if err == nil {
-				err = g.SendEndGameNotifications(c)
+			if err != nil {
+				log.Errorf(err.Error())
+				defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+				return
 			}
-		} else {
-			s = s.GetUpdate(c, time.Time(g.UpdatedAt))
-			err = g.saveWith(c, []*datastore.Key{s.Key}, []interface{}{s})
-			if err == nil {
-				if newCP := g.CurrentPlayer(); newCP != nil && oldCP.ID() != newCP.ID() {
-					err = g.SendTurnNotificationsTo(c, newCP)
-				}
+			err = g.SendEndGameNotifications(c)
+			if err != nil {
+				log.Warningf(err.Error())
 			}
+			defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			return
 		}
 
+		s = s.GetUpdate(c, time.Time(g.UpdatedAt))
+		err = g.saveWith(c, []*datastore.Key{s.Key}, []interface{}{s})
 		if err != nil {
 			log.Errorf(err.Error())
+			defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			return
 		}
 
-		return
+		newCP := g.CurrentPlayer()
+		if newCP != nil && oldCP.ID() != newCP.ID() {
+			err = g.SendTurnNotificationsTo(c, newCP)
+			if err != nil {
+				log.Warningf(err.Error())
+			}
+		}
+
+		defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 	}
 }
 
