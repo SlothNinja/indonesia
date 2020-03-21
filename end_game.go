@@ -11,7 +11,7 @@ import (
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/send"
 	"github.com/gin-gonic/gin"
-	"google.golang.org/appengine/mail"
+	"github.com/mailjet/mailjet-apiv3-go"
 )
 
 func init() {
@@ -92,9 +92,9 @@ func (g *Game) SendEndGameNotifications(c *gin.Context) error {
 	g.Phase = GameOver
 	g.Status = game.Completed
 
-	ms := make([]*mail.Message, len(g.Players()))
-	sender := "webmaster@slothninja.com"
+	ms := make([]mailjet.InfoMessagesV31, len(g.Players()))
 	subject := fmt.Sprintf("SlothNinja Games: Indonesia #%d Has Ended", g.ID)
+
 	var body string
 	for _, p := range g.Players() {
 		body += fmt.Sprintf("%s scored %d points.\n", g.NameFor(p), p.Score())
@@ -107,14 +107,24 @@ func (g *Game) SendEndGameNotifications(c *gin.Context) error {
 	body += fmt.Sprintf("\nCongratulations to: %s.", restful.ToSentence(names))
 
 	for i, p := range g.Players() {
-		ms[i] = &mail.Message{
-			To:      []string{p.User().Email},
-			Sender:  sender,
-			Subject: subject,
-			Body:    body,
+		u := p.User()
+		ms[i] = mailjet.InfoMessagesV31{
+			From: &mailjet.RecipientV31{
+				Email: "webmaster@slothninja.com",
+				Name:  "Webmaster",
+			},
+			To: &mailjet.RecipientsV31{
+				mailjet.RecipientV31{
+					Email: u.Email,
+					Name:  u.Name,
+				},
+			},
+			Subject:  subject,
+			TextPart: body,
 		}
 	}
-	return send.Message(c, ms...)
+	_, err := send.Messages(c, ms...)
+	return err
 }
 
 type announceWinnersEntry struct {
