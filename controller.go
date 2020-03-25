@@ -117,7 +117,7 @@ func (g *Game) Update(c *gin.Context) (tmpl string, act game.ActionType, err err
 	return
 }
 
-func Show(prefix string) gin.HandlerFunc {
+func (svr server) show(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
@@ -139,7 +139,7 @@ func Show(prefix string) gin.HandlerFunc {
 	}
 }
 
-func Update(prefix string) gin.HandlerFunc {
+func (svr server) update(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
@@ -164,7 +164,8 @@ func Update(prefix string) gin.HandlerFunc {
 				restful.AddErrorf(c, "%v", err)
 			}
 		case actionType == game.Save:
-			if err := g.save(c); err != nil {
+			err := svr.save(c, g)
+			if err != nil {
 				log.Errorf("%s", err)
 				restful.AddErrorf(c, "Controller#Update Save Error: %s", err)
 				c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
@@ -201,15 +202,10 @@ func Update(prefix string) gin.HandlerFunc {
 		}
 	}
 }
-func (g *Game) save(c *gin.Context) error {
-	dsClient, err := datastore.NewClient(c, "")
-	if err != nil {
-		return err
-	}
-
-	_, err = dsClient.RunInTransaction(c, func(tx *datastore.Transaction) error {
+func (svr server) save(c *gin.Context, g *Game) error {
+	_, err := svr.RunInTransaction(c, func(tx *datastore.Transaction) error {
 		oldG := New(c, g.ID())
-		err = tx.Get(oldG.Key, oldG.Header)
+		err := tx.Get(oldG.Key, oldG.Header)
 		if err != nil {
 			return err
 		}
@@ -237,13 +233,8 @@ func (g *Game) save(c *gin.Context) error {
 	return err
 }
 
-func (g *Game) saveWith(c *gin.Context, ks []*datastore.Key, es []interface{}) error {
-	dsClient, err := datastore.NewClient(c, "")
-	if err != nil {
-		return err
-	}
-
-	_, err = dsClient.RunInTransaction(c, func(tx *datastore.Transaction) error {
+func (svr server) saveWith(c *gin.Context, g *Game, ks []*datastore.Key, es []interface{}) error {
+	_, err := svr.RunInTransaction(c, func(tx *datastore.Transaction) error {
 		oldG := New(c, g.ID())
 		err := tx.Get(oldG.Key, oldG.Header)
 		if err != nil {
@@ -333,24 +324,26 @@ func newGamer(c *gin.Context) game.Gamer {
 	return New(c, 0)
 }
 
-func Undo(prefix string) gin.HandlerFunc {
+func (svr server) undo(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
-		c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 
 		g := gameFrom(c)
 		if g == nil {
 			log.Errorf("Controller#Update Game Not Found")
+			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
+
 		mkey := g.UndoKey(c)
 		if err := memcache.Delete(c, mkey); err != nil && err != memcache.ErrCacheMiss {
 			log.Errorf("Controller#Undo Error: %s", err)
 		}
+		c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 	}
 }
-func Index(prefix string) gin.HandlerFunc {
+func (svr server) index(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
@@ -378,7 +371,7 @@ func Index(prefix string) gin.HandlerFunc {
 	}
 }
 
-func NewAction(prefix string) gin.HandlerFunc {
+func (svr server) new(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
@@ -400,7 +393,7 @@ func NewAction(prefix string) gin.HandlerFunc {
 	}
 }
 
-func Create(prefix string) gin.HandlerFunc {
+func (svr server) create(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
@@ -421,14 +414,7 @@ func Create(prefix string) gin.HandlerFunc {
 			return
 		}
 
-		dsClient, err := datastore.NewClient(c, "")
-		if err != nil {
-			log.Errorf(err.Error())
-			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
-			return
-		}
-
-		ks, err := dsClient.AllocateIDs(c, []*datastore.Key{g.Key})
+		ks, err := svr.AllocateIDs(c, []*datastore.Key{g.Key})
 		if err != nil {
 			log.Errorf(err.Error())
 			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
@@ -437,7 +423,7 @@ func Create(prefix string) gin.HandlerFunc {
 
 		k := ks[0]
 
-		_, err = dsClient.RunInTransaction(c, func(tx *datastore.Transaction) error {
+		_, err = svr.RunInTransaction(c, func(tx *datastore.Transaction) error {
 			m := mlog.New(k.ID)
 			ks := []*datastore.Key{m.Key, k}
 			es := []interface{}{m, g.Header}
@@ -455,71 +441,90 @@ func Create(prefix string) gin.HandlerFunc {
 	}
 }
 
-func Accept(prefix string) gin.HandlerFunc {
+func (svr server) accept(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
-		defer c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
 
 		g := gameFrom(c)
 		if g == nil {
 			log.Errorf("game not found")
+			restful.AddErrorf(c, "game not found")
+			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
 			return
 		}
 
-		var (
-			start bool
-			err   error
-		)
-
 		u := user.CurrentFrom(c)
-		if start, err = g.Accept(c, u); err == nil && start {
-			err = g.Start(c)
-		}
-
-		if err == nil {
-			err = g.save(c)
-		}
-
-		if err == nil && start {
-			g.SendTurnNotificationsTo(c, g.CurrentPlayer())
-		}
-
+		start, err := g.Accept(c, u)
 		if err != nil {
 			log.Errorf(err.Error())
+			restful.AddErrorf(c, err.Error())
+			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
+			return
 		}
 
+		if start {
+			err = g.Start(c)
+			if err != nil {
+				log.Errorf(err.Error())
+				restful.AddErrorf(c, err.Error())
+				c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
+				return
+			}
+		}
+
+		err = svr.save(c, g)
+		if err != nil {
+			log.Errorf(err.Error())
+			restful.AddErrorf(c, err.Error())
+			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
+			return
+		}
+
+		if start {
+			err = g.SendTurnNotificationsTo(c, g.CurrentPlayer())
+			if err != nil {
+				log.Warningf(err.Error())
+			}
+		}
+		c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
 	}
 }
 
-func Drop(prefix string) gin.HandlerFunc {
+func (svr server) drop(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
-		defer c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
 
 		g := gameFrom(c)
 		if g == nil {
 			log.Errorf("game not found")
+			restful.AddErrorf(c, "game not found")
+			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
 			return
 		}
 
-		var err error
-
 		u := user.CurrentFrom(c)
-		if err = g.Drop(u); err == nil {
-			err = g.save(c)
+		err := g.Drop(u)
+		if err != nil {
+			log.Errorf(err.Error())
+			restful.AddErrorf(c, err.Error())
+			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
+			return
 		}
 
+		err = svr.save(c, g)
 		if err != nil {
 			log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
 		}
 
+		c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
+		return
 	}
 }
 
-func Fetch(c *gin.Context) {
+func (svr server) fetch(c *gin.Context) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 	// create Gamer
@@ -539,18 +544,21 @@ func Fetch(c *gin.Context) {
 		fallthrough
 	case action == "undo" && !t.MultiUndo():
 		// pull from memcache/datastore
-		if err := dsGet(c, g); err != nil {
+		err := svr.dsGet(c, g)
+		if err != nil {
 			c.Redirect(http.StatusSeeOther, homePath)
 			return
 		}
 	default:
 		if user.CurrentFrom(c) != nil {
 			// pull from memcache and return if successful; otherwise pull from datastore
-			if err := mcGet(c, g); err == nil {
+			err := mcGet(c, g)
+			if err == nil {
 				return
 			}
 		}
-		if err := dsGet(c, g); err != nil {
+		err := svr.dsGet(c, g)
+		if err != nil {
 			c.Redirect(http.StatusSeeOther, homePath)
 			return
 		}
@@ -583,17 +591,11 @@ func mcGet(c *gin.Context, g *Game) error {
 }
 
 // pull game state from memcache/datastore.  returned memcache should be same as datastore.
-func dsGet(c *gin.Context, g *Game) error {
+func (svr server) dsGet(c *gin.Context, g *Game) error {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	dsClient, err := datastore.NewClient(c, "")
-	if err != nil {
-		log.Errorf(err.Error())
-		return err
-	}
-
-	switch err := dsClient.Get(c, g.Key, g.Header); {
+	switch err := svr.Get(c, g.Key, g.Header); {
 	case err != nil:
 		restful.AddErrorf(c, err.Error())
 		return err
@@ -625,7 +627,7 @@ func JSON(c *gin.Context) {
 	c.JSON(http.StatusOK, gameFrom(c))
 }
 
-func JSONIndexAction(prefix string) gin.HandlerFunc {
+func (svr server) jsonIndexAction(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")

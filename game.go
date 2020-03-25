@@ -19,10 +19,10 @@ func init() {
 	gob.Register(new(startEntry))
 }
 
-func Register(t gtype.Type, r *gin.Engine) {
+func (svr server) Register(t gtype.Type, r *gin.Engine) *gin.Engine {
 	gob.Register(new(Game))
 	game.Register(t, newGamer, PhaseNames, nil)
-	AddRoutes(t.Prefix(), r)
+	return svr.addRoutes(t.Prefix(), r)
 }
 
 var ErrMustBeGame = errors.New("Resource must have type *Game.")

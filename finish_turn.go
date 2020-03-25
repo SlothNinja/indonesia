@@ -2,7 +2,6 @@ package indonesia
 
 import (
 	"net/http"
-	"time"
 
 	"cloud.google.com/go/datastore"
 	"github.com/SlothNinja/contest"
@@ -14,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Finish(prefix string) gin.HandlerFunc {
+func (svr server) finish(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
@@ -25,7 +24,7 @@ func Finish(prefix string) gin.HandlerFunc {
 		s, cs, err := g.finishTurn(c)
 		if err != nil {
 			log.Errorf(err.Error())
-			defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
 
@@ -33,26 +32,26 @@ func Finish(prefix string) gin.HandlerFunc {
 		if cs != nil {
 			g.Phase = GameOver
 			g.Status = game.Completed
-			ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), cs)
-			err = g.saveWith(c, ks, es)
+			ks, es := wrap(s.GetUpdate(c, g.UpdatedAt), cs)
+			err = svr.saveWith(c, g, ks, es)
 			if err != nil {
 				log.Errorf(err.Error())
-				defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+				c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 				return
 			}
 			err = g.SendEndGameNotifications(c)
 			if err != nil {
 				log.Warningf(err.Error())
 			}
-			defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
 
-		s = s.GetUpdate(c, time.Time(g.UpdatedAt))
-		err = g.saveWith(c, []*datastore.Key{s.Key}, []interface{}{s})
+		s = s.GetUpdate(c, g.UpdatedAt)
+		err = svr.saveWith(c, g, []*datastore.Key{s.Key}, []interface{}{s})
 		if err != nil {
 			log.Errorf(err.Error())
-			defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
 
