@@ -56,6 +56,8 @@ github.com/SlothNinja/memcache v0.0.0-20200321195207-184761e76825 h1:t7Ox3U5X544
 github.com/SlothNinja/memcache v0.0.0-20200321195207-184761e76825/go.mod h1:37La+lmjh6UGxjuWD10SSY8N51pwk6yHyMnnGvEQ7as=
 github.com/SlothNinja/mlog v0.0.0-20200319132402-ae728a349beb h1:VDhYE2jnApzQYm1E5Zhlcbsnzwg61EQP9/BQH7Rk+cU=
 github.com/SlothNinja/mlog v0.0.0-20200319132402-ae728a349beb/go.mod h1:0IXB1ig1gRk+RKE3BmIyh8ERGcRENfoVq6oj9aXQXXA=
+github.com/SlothNinja/mlog v0.0.0-20200328184746-00a4dcf73e02 h1:1JBYrXGQuBc+/eQ84bEPmw85MJQC+K/TIFf3pCjx1Hk=
+github.com/SlothNinja/mlog v0.0.0-20200328184746-00a4dcf73e02/go.mod h1:0IXB1ig1gRk+RKE3BmIyh8ERGcRENfoVq6oj9aXQXXA=
 github.com/SlothNinja/rating v0.0.0-20200319041223-e4d234b4c689 h1:8+gbfRLz2uplSjx9xkdEI5rLvUn+hEijNrwaejpdWRQ=
 github.com/SlothNinja/rating v0.0.0-20200319041223-e4d234b4c689/go.mod h1:yROYjvr+uEhK8yw3Fh0qB/a7FaEJTTeHwhSvjR5HKFA=
 github.com/SlothNinja/rating v0.0.0-20200321184620-3c544e573b3b h1:5oHXvoTw7CTdBZcFTFQ6xLy3R08DHvKlEZnLqOROdL4=

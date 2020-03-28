@@ -8,7 +8,7 @@ require (
 	github.com/SlothNinja/game v0.0.0-20200321040413-d51ae22f32e0
 	github.com/SlothNinja/log v0.0.2
 	github.com/SlothNinja/memcache v0.0.0-20200321195207-184761e76825
-	github.com/SlothNinja/mlog v0.0.0-20200319132402-ae728a349beb
+	github.com/SlothNinja/mlog v0.0.0-20200328184746-00a4dcf73e02
 	github.com/SlothNinja/rating v0.0.0-20200321184620-3c544e573b3b // indirect
 	github.com/SlothNinja/restful v0.0.0-20200317231650-e1a2eb3f56b2
 	github.com/SlothNinja/send v0.0.0-20200321040208-716c0a7a4470
