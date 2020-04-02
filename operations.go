@@ -44,15 +44,13 @@ func (m ShipperIncomeMap) OwnShips(pid int) int {
 	return ships
 }
 
-func (g *Game) startOperations(c *gin.Context) (cs contest.Contests) {
+func (client Client) startOperations(c *gin.Context, g *Game) (contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	var np *Player
-
-	if np = g.companyExpansionNextPlayer(); np == nil {
-		cs = g.startCityGrowth(c)
-		return
+	np := g.companyExpansionNextPlayer()
+	if np == nil {
+		return client.startCityGrowth(c, g)
 	}
 
 	g.beginningOfPhaseReset()
@@ -62,7 +60,7 @@ func (g *Game) startOperations(c *gin.Context) (cs contest.Contests) {
 	g.resetOpIncome()
 	g.setCurrentPlayers(np)
 	g.OverrideDeliveries = -1
-	return
+	return nil, nil
 }
 
 func (g *Game) resetOpIncome() {

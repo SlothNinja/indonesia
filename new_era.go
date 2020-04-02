@@ -16,7 +16,7 @@ func init() {
 	gob.Register(new(endGameTriggeredEntry))
 }
 
-func (g *Game) startNewEra(c *gin.Context) (cs contest.Contests) {
+func (client Client) startNewEra(c *gin.Context, g *Game) (contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -26,8 +26,7 @@ func (g *Game) startNewEra(c *gin.Context) (cs contest.Contests) {
 	g.beginningOfPhaseReset()
 	g.resetCompanies()
 	g.resetCities()
-	cs = g.checkForNewEra(c)
-	return
+	return client.checkForNewEra(c, g)
 }
 
 //func (g *Game) beginningOfTurnReset() {
@@ -37,7 +36,7 @@ func (g *Game) startNewEra(c *gin.Context) (cs contest.Contests) {
 //	}
 //}
 
-func (g *Game) checkForNewEra(c *gin.Context) (cs contest.Contests) {
+func (client Client) checkForNewEra(c *gin.Context, g *Game) (contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -48,14 +47,15 @@ func (g *Game) checkForNewEra(c *gin.Context) (cs contest.Contests) {
 		g.newNewEraEntry(n, g.Era, g.AvailableDeeds)
 		g.AvailableDeeds = deedsFor(g.Era).RemoveUnstartable(g)
 		g.startNewCity(c)
+		return nil, nil
 	case n < 2 && g.Era == EraC:
 		g.newEndGameTriggeredEntry(n)
-		cs = g.endGame(c)
+		return client.endGame(c, g)
 	default:
 		g.newNoNewEraEntry(n, g.Era)
 		g.startBidForTurnOrder(c)
+		return nil, nil
 	}
-	return
 }
 
 func (g *Game) startNewCity(c *gin.Context) {

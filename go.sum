@@ -42,8 +42,12 @@ github.com/SlothNinja/color v0.0.0-20200316011031-586fe3c95fae h1:8UuZrBK5gCXGqx
 github.com/SlothNinja/color v0.0.0-20200316011031-586fe3c95fae/go.mod h1:n2aVe+0I0CguyHaEbpwdHCcx7mAiI2o6kbeYqQ2UbMI=
 github.com/SlothNinja/contest v0.0.0-20200319032446-29b690351b81 h1:vrvtEezlBbmkxoWzu9M/nVy5J2eQdZyMsGhYg8JYkoo=
 github.com/SlothNinja/contest v0.0.0-20200319032446-29b690351b81/go.mod h1:xWuD/slikRLW4jy3Q9qEWBeT1h1oPvpWC14mqaCEwpA=
+github.com/SlothNinja/contest v0.0.0-20200326205205-9c14973aeaac h1:apKC6hM9t14pViHnTT3NhoacnXJT6cgiznk7+Gh3/Vw=
+github.com/SlothNinja/contest v0.0.0-20200326205205-9c14973aeaac/go.mod h1:xWuD/slikRLW4jy3Q9qEWBeT1h1oPvpWC14mqaCEwpA=
 github.com/SlothNinja/game v0.0.0-20200321040413-d51ae22f32e0 h1:bhrLp3LIosVSB+enLwwCYKOGiAmDUk45MP2jNVY5aKk=
 github.com/SlothNinja/game v0.0.0-20200321040413-d51ae22f32e0/go.mod h1:CRp0Bfl86YYyjphku9J9j1yQZDy5Um6Zj6aJzUNLYyg=
+github.com/SlothNinja/game v0.0.0-20200402024946-c54abc9cef2c h1:35d2ZQhd0vbAs0rASIIi48ly05RpYhg+hADv9Jurd8A=
+github.com/SlothNinja/game v0.0.0-20200402024946-c54abc9cef2c/go.mod h1:/SCG8HMcCeGrlKDXKO7Qg4osp7U4d8A9vZKcZWsz0hw=
 github.com/SlothNinja/gin-render v0.0.0-20200211051850-fbcc24764f62 h1:v9rQxAHRVujHIRnEt4jMsVNbrR9aSh9UMmEPt1/6XEo=
 github.com/SlothNinja/gin-render v0.0.0-20200211051850-fbcc24764f62/go.mod h1:Aby+/1P+1GWPN2+O+YRzr++dnRUOJtUl4/1ySkBYFrg=
 github.com/SlothNinja/glicko v0.0.0-20200212023639-f1ccdd954e0a h1:Q3KYPblyWuNmtV61DuCX+h9jsQUj4I5hVvP9IqjHzns=
@@ -62,6 +66,8 @@ github.com/SlothNinja/rating v0.0.0-20200319041223-e4d234b4c689 h1:8+gbfRLz2uplS
 github.com/SlothNinja/rating v0.0.0-20200319041223-e4d234b4c689/go.mod h1:yROYjvr+uEhK8yw3Fh0qB/a7FaEJTTeHwhSvjR5HKFA=
 github.com/SlothNinja/rating v0.0.0-20200321184620-3c544e573b3b h1:5oHXvoTw7CTdBZcFTFQ6xLy3R08DHvKlEZnLqOROdL4=
 github.com/SlothNinja/rating v0.0.0-20200321184620-3c544e573b3b/go.mod h1:1uQlDR7fHJ0fblTf3iHlBhuGamxwV9m0jHZ7bfeali4=
+github.com/SlothNinja/rating v0.0.0-20200402000143-d750ecc77bc4 h1:9vRSxQ565dJKWiZ+Eu0h224n4SDpuSFvuCn3BkiyrTw=
+github.com/SlothNinja/rating v0.0.0-20200402000143-d750ecc77bc4/go.mod h1:C9SrNSOAMLawtf0T2HKG3ItmLSdfV3jAXWefL20qbSY=
 github.com/SlothNinja/restful v0.0.0-20200305160031-2685dc5cffcd h1:Hd3uH1WZbGJV/1XgXsqQV6WOdakUWwROi/iLhcsZg1U=
 github.com/SlothNinja/restful v0.0.0-20200305160031-2685dc5cffcd/go.mod h1:b07n+6HfLMGNHNZjYkohQmnADku9IA55shlWvcnFRJ8=
 github.com/SlothNinja/restful v0.0.0-20200317231650-e1a2eb3f56b2 h1:a4wKtln4/3p5CC4i+JvCdGSmiaPzAz58YO00m4l2ImM=

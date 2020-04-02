@@ -26,7 +26,7 @@ func init() {
 
 type cityGrowthMap map[int]Cities
 
-func (g *Game) startCityGrowth(c *gin.Context) (cs contest.Contests) {
+func (client Client) startCityGrowth(c *gin.Context, g *Game) (contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -35,19 +35,22 @@ func (g *Game) startCityGrowth(c *gin.Context) (cs contest.Contests) {
 	g.newDeliveredGoodsEntry()
 	cmap := g.CityGrowthMap()
 
-	switch c2growth, c2stonesToUse, c3growth, c3stonesToUse := len(cmap[Size2]), g.C2StonesToUse(cmap),
-		len(cmap[Size3]), g.C3StonesToUse(cmap); {
+	c2growth, c2stonesToUse := len(cmap[Size2]), g.C2StonesToUse(cmap)
+	c3growth, c3stonesToUse := len(cmap[Size3]), g.C3StonesToUse(cmap)
+
+	switch {
 	case c3stonesToUse > 0 && c3stonesToUse < c3growth:
+		return nil, nil
 	case c2stonesToUse > 0 && c2stonesToUse < c2growth:
+		return nil, nil
 	default:
 		for _, cities := range cmap {
 			for _, city := range cities {
 				g.grow(city)
 			}
 		}
-		cs = g.startNewEra(c)
+		return client.startNewEra(c, g)
 	}
-	return
 }
 
 func (g *Game) grow(c *City) {

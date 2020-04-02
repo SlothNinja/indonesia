@@ -36,9 +36,10 @@ func (g *Game) NewKey(c *gin.Context, id int64) *datastore.Key {
 	return newKey(c, id)
 }
 
-func (g *Game) init(c *gin.Context) (err error) {
-	if err = g.Header.AfterLoad(g); err != nil {
-		return
+func (client Client) init(c *gin.Context, g *Game) error {
+	err := client.Game.AfterLoad(c, g.Header)
+	if err != nil {
+		return err
 	}
 
 	for _, player := range g.Players() {
@@ -53,7 +54,7 @@ func (g *Game) init(c *gin.Context) (err error) {
 	if g.SiapFajiMerger != nil {
 		g.SiapFajiMerger.init(g)
 	}
-	return
+	return nil
 }
 
 //func (g *Game) Save(c chan<- datastore.Property) error {
@@ -124,8 +125,8 @@ func (g *Game) init(c *gin.Context) (err error) {
 //	return g.init(g.CTX())
 //}
 
-func (g *Game) AfterCache() error {
-	return g.init(g.CTX())
+func (client Client) AfterCache(c *gin.Context, g *Game) error {
+	return client.init(c, g)
 }
 
 func copyGame(g Game) *Game {

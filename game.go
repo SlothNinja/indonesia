@@ -167,14 +167,14 @@ func (g *Game) setPlayers(players Players) {
 
 type Games []*Game
 
-func (g *Game) Start(c *gin.Context) (err error) {
+func (client Client) Start(c *gin.Context, g *Game) error {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	g.Status = game.Running
 	g.Version = 2
 	g.setupPhase(c)
-	return
+	return client.start(c, g)
 }
 
 func (g *Game) addNewPlayers() {
@@ -195,8 +195,6 @@ func (g *Game) setupPhase(c *gin.Context) {
 		g.newSetupEntryFor(p)
 	}
 	g.beginningOfPhaseReset()
-	g.start(c)
-	return
 }
 
 func (g *Game) getAvailableShipType() ShipType {
@@ -232,14 +230,14 @@ func (e *setupEntry) HTML(c *gin.Context) template.HTML {
 	return restful.HTML("%s received 100 rupiah and 3 city cards.", g.NameByPID(e.PlayerID))
 }
 
-func (g *Game) start(c *gin.Context) {
+func (client Client) start(c *gin.Context, g *Game) error {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	g.Phase = StartGame
 	g.newStartEntry()
-	g.startNewEra(c)
-	return
+	_, err := client.startNewEra(c, g)
+	return err
 }
 
 type startEntry struct {

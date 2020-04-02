@@ -90,7 +90,7 @@ func (p *Player) compareByScore(player *Player) game.Comparison {
 //	return places
 //}
 
-func (g *Game) determinePlaces(c *gin.Context) contest.Places {
+func (client Client) determinePlaces(c *gin.Context, g *Game) (contest.Places, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -104,11 +104,15 @@ func (g *Game) determinePlaces(c *gin.Context) contest.Places {
 		rmap := make(contest.ResultsMap, 0)
 		results := make(contest.Results, 0)
 		for j, p2 := range g.Players() {
+			r, err := client.Rating.For(c, p2.User(), g.Type)
+			if err != nil {
+				return nil, err
+			}
 			result := &contest.Result{
 				GameID: g.ID(),
 				Type:   g.Type,
-				R:      p2.Rating().R,
-				RD:     p2.Rating().RD,
+				R:      r.R,
+				RD:     r.RD,
 			}
 			switch c := p1.compareByScore(p2); {
 			case i == j:
@@ -123,7 +127,7 @@ func (g *Game) determinePlaces(c *gin.Context) contest.Places {
 		rmap[p1.User().Key] = results
 		places = append(places, rmap)
 	}
-	return places
+	return places, nil
 }
 
 type ByTurnOrderBid struct{ Players }
