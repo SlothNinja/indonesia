@@ -49,7 +49,7 @@ type State struct {
 }
 
 // Non-persistent values
-// They are memcached but ignored by datastore
+// They are cached but ignored by datastore
 type TempData struct {
 	SelectedSlot             int
 	SelectedAreaID           AreaID

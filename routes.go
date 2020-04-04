@@ -9,6 +9,7 @@ import (
 	"github.com/SlothNinja/user"
 	stats "github.com/SlothNinja/user-stats"
 	"github.com/gin-gonic/gin"
+	"github.com/patrickmn/go-cache"
 )
 
 type Client struct {
@@ -17,15 +18,17 @@ type Client struct {
 	MLog   mlog.Client
 	Game   game.Client
 	Rating rating.Client
+	Cache  *cache.Cache
 }
 
-func NewClient(dsClient *datastore.Client) Client {
+func NewClient(dsClient *datastore.Client, mcache *cache.Cache) Client {
 	return Client{
 		Client: dsClient,
 		Stats:  stats.NewClient(dsClient),
 		MLog:   mlog.NewClient(dsClient),
 		Game:   game.NewClient(dsClient),
 		Rating: rating.NewClient(dsClient),
+		Cache:  mcache,
 	}
 }
 

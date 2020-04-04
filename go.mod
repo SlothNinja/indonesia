@@ -18,4 +18,5 @@ require (
 	github.com/SlothNinja/user-stats v0.0.0-20200403020613-019e7852638e
 	github.com/gin-gonic/gin v1.6.2
 	github.com/mailjet/mailjet-apiv3-go v0.0.0-20190724151621-55e56f74078c
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 )
