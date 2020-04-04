@@ -93,21 +93,22 @@ func (client Client) finishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.
 	}
 }
 
-func (g *Game) validateFinishTurn(c *gin.Context) (s *stats.Stats, err error) {
+func (g *Game) validateFinishTurn(c *gin.Context) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	var cp *Player
-
-	switch cp, s = g.CurrentPlayer(), stats.Fetched(c); {
+	cp := g.CurrentPlayer()
+	s := stats.Fetched(c)
+	switch {
 	case s == nil:
-		err = sn.NewVError("missing stats for player.")
+		return nil, sn.NewVError("missing stats for player.")
 	case !g.CUserIsCPlayerOrAdmin(c):
-		err = sn.NewVError("Only the current player may finish a turn.")
+		return nil, sn.NewVError("only the current player may finish a turn.")
 	case !cp.PerformedAction:
-		err = sn.NewVError("%s has yet to perform an action.", g.NameFor(cp))
+		return nil, sn.NewVError("%s has yet to perform an action.", g.NameFor(cp))
+	default:
+		return s, nil
 	}
-	return
 }
 
 // ps is an optional parameter.
@@ -175,14 +176,19 @@ func (client Client) newEraFinishTurn(c *gin.Context, g *Game) (*stats.Stats, co
 	return s, nil, nil
 }
 
-func (g *Game) validateNewEraFinishTurn(c *gin.Context) (s *stats.Stats, err error) {
+func (g *Game) validateNewEraFinishTurn(c *gin.Context) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if s, err = g.validateFinishTurn(c); g.Phase != NewEra {
-		err = sn.NewVError(`Expected "New Era" phase but have %q phase.`, g.Phase)
+	s, err := g.validateFinishTurn(c)
+	if err != nil {
+		return nil, err
 	}
-	return
+
+	if g.Phase != NewEra {
+		return nil, sn.NewVError(`expected "New Era" phase but have %q phase.`, g.Phase)
+	}
+	return s, nil
 }
 
 func (g *Game) bidForTurnOrderNextPlayer(pers ...game.Playerer) *Player {

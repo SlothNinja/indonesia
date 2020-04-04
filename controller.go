@@ -566,7 +566,11 @@ func (client Client) mcGet(c *gin.Context, g *Game) error {
 	}
 
 	g = g2
-	color.WithMap(withGame(c, g), g.ColorMapFor(user.CurrentFrom(c)))
+	cu := user.CurrentFrom(c)
+	cmap := g.ColorMapFor(cu)
+
+	c = withGame(c, g)
+	c = color.WithMap(c, cmap)
 	return nil
 }
 
