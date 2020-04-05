@@ -170,7 +170,6 @@ func (client Client) newEraFinishTurn(c *gin.Context, g *Game) (*stats.Stats, co
 			g.removeUnplayableCityCardsFor(c, p)
 		}
 		g.startBidForTurnOrder(c)
-		return s, nil, nil
 	}
 	g.setCurrentPlayers(np)
 	return s, nil, nil
