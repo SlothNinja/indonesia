@@ -123,19 +123,18 @@ func (g *Game) nextPlayer(ps ...game.Playerer) (p *Player) {
 	return
 }
 
-func (g *Game) newEraNextPlayer(pers ...game.Playerer) (p *Player) {
+func (g *Game) newEraNextPlayer() *Player {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	g.CurrentPlayer().endOfTurnUpdate()
-	p = g.nextPlayer(pers...)
+	p := g.nextPlayer()
 	for g.Players().anyCanPlaceCity() {
-		if !p.CanPlaceCity() {
-			p = g.nextPlayer(p)
-		} else {
+		if p.CanPlaceCity() {
 			p.beginningOfTurnReset()
-			return
+			return p
 		}
+		p = g.nextPlayer(p)
 	}
 	return nil
 }
@@ -169,7 +168,7 @@ func (client Client) newEraFinishTurn(c *gin.Context, g *Game) (*stats.Stats, co
 		for _, p := range g.Players() {
 			g.removeUnplayableCityCardsFor(c, p)
 		}
-		g.startBidForTurnOrder(c)
+		np = g.startBidForTurnOrder(c)
 	}
 	g.setCurrentPlayers(np)
 	return s, nil, nil

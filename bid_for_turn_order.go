@@ -20,12 +20,12 @@ func init() {
 
 const NoBid = -1
 
-func (g *Game) startBidForTurnOrder(c *gin.Context) {
+func (g *Game) startBidForTurnOrder(c *gin.Context) *Player {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	g.Phase = BidForTurnOrder
-	g.setCurrentPlayers(g.Players()[0])
+	return g.Players()[0]
 }
 
 func (g *Game) placeTurnOrderBid(c *gin.Context) (tmpl string, act game.ActionType, err error) {
