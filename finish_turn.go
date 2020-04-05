@@ -113,14 +113,15 @@ func (g *Game) validateFinishTurn(c *gin.Context) (*stats.Stats, error) {
 
 // ps is an optional parameter.
 // If no player is provided, assume current player.
-func (g *Game) nextPlayer(ps ...game.Playerer) (p *Player) {
+func (g *Game) nextPlayer(ps ...game.Playerer) *Player {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if nper := g.NextPlayerer(ps...); nper != nil {
-		p = nper.(*Player)
+	nper := g.NextPlayerer(ps...)
+	if nper != nil {
+		return nper.(*Player)
 	}
-	return
+	return nil
 }
 
 func (g *Game) newEraNextPlayer() *Player {

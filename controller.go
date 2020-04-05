@@ -48,29 +48,6 @@ func withJSON(c *gin.Context, g *Game) *gin.Context {
 	return c
 }
 
-//type Action func(*Game, url.Values) (string, game.ActionType, error)
-//
-//var actionMap = map[string]Action{
-//	"select-area":              selectArea,
-//	"select-hull-player":       selectHullPlayer,
-//	"turn-order-bid":           placeTurnOrderBid,
-//	"stop-expanding":           stopExpanding,
-//	"accept-proposed-flow":     acceptProposedFlow,
-//	"city-growth":              cityGrowth,
-//	"pass":                     pass,
-//	"merger-bid":               mergerBid,
-//	"undo":                     undoAction,
-//	"redo":                     redoAction,
-//	"reset":                    resetTurn,
-//	"finish":                   finishTurn,
-//	"admin-header":             adminHeader,
-//	"admin-area":               adminArea,
-//	"admin-patch":              adminPatch,
-//	"admin-player":             adminPlayer,
-//	"admin-company":            adminCompany,
-//	"admin-player-new-company": adminPlayerNewCompany,
-//}
-
 func (g *Game) Update(c *gin.Context) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
@@ -98,8 +75,6 @@ func (g *Game) Update(c *gin.Context) (tmpl string, act game.ActionType, err err
 		tmpl, act, err = g.redoAction(c)
 	case "reset":
 		tmpl, act, err = g.resetTurn(c)
-	//	case "finish":
-	//		tmpl, act, err = g.finishTurn(c)
 	case "admin-header":
 		tmpl, act, err = g.adminHeader(c)
 	case "admin-cities":
@@ -267,19 +242,6 @@ func (g *Game) encode(c *gin.Context) (err error) {
 
 	return
 }
-
-// func (g *Game) cache(c *gin.Context) error {
-// 	item := &memcache.Item{
-// 		Key:        g.UndoKey(c),
-// 		Expiration: time.Minute * 30,
-// 	}
-// 	v, err := codec.Encode(g)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	item.Value = v
-// 	return memcache.Set(c, item)
-// }
 
 func wrap(s *stats.Stats, cs contest.Contests) ([]*datastore.Key, []interface{}) {
 	l := len(cs) + 1
