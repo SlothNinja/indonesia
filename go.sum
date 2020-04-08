@@ -45,6 +45,8 @@ github.com/SlothNinja/contest v0.0.0-20200403023759-bcfca8b2ea81 h1:o5PyvNuL9piy
 github.com/SlothNinja/contest v0.0.0-20200403023759-bcfca8b2ea81/go.mod h1:Zy5Q2fHmj4ihtNZxHuGcP+SGCM4fMKTuOKJ6q+REGxQ=
 github.com/SlothNinja/game v0.0.0-20200403024413-6ec55c722e60 h1:pLz1JkALoxwckt+Xz/eSku7Z4qhHQ1I4QpNA8k478yI=
 github.com/SlothNinja/game v0.0.0-20200403024413-6ec55c722e60/go.mod h1:K/jc4iGjDcbSMVE5sBm3F1j9v47W4TaaqYy8+S18jFY=
+github.com/SlothNinja/game v0.0.0-20200408230610-c90eea60462f h1:p9EgGJzjGvmD47OSRBAIh9ml0vHm15L0y9lnj8Ymwx0=
+github.com/SlothNinja/game v0.0.0-20200408230610-c90eea60462f/go.mod h1:K/jc4iGjDcbSMVE5sBm3F1j9v47W4TaaqYy8+S18jFY=
 github.com/SlothNinja/gin-render v0.0.0-20200211051850-fbcc24764f62 h1:v9rQxAHRVujHIRnEt4jMsVNbrR9aSh9UMmEPt1/6XEo=
 github.com/SlothNinja/gin-render v0.0.0-20200211051850-fbcc24764f62/go.mod h1:Aby+/1P+1GWPN2+O+YRzr++dnRUOJtUl4/1ySkBYFrg=
 github.com/SlothNinja/glicko v0.0.0-20200212023639-f1ccdd954e0a h1:Q3KYPblyWuNmtV61DuCX+h9jsQUj4I5hVvP9IqjHzns=

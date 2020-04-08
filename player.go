@@ -77,19 +77,6 @@ func (p *Player) compareByScore(player *Player) game.Comparison {
 	return game.EqualTo
 }
 
-//func (g *Game) determinePlaces() []Players {
-//	// sort players by score
-//	players := g.Players()
-//	sort.Sort(Reverse{ByScore{players}})
-//	g.setPlayers(players)
-//
-//	places := make([]Players, 0)
-//	for _, p := range g.Players() {
-//		places = append(places, Players{p})
-//	}
-//	return places
-//}
-
 func (client Client) determinePlaces(c *gin.Context, g *Game) (contest.Places, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
@@ -186,10 +173,6 @@ func newPlayer() *Player {
 	return p
 }
 
-//func (p *Player) BidMultiplier() int {
-//	return p.Technologies[BidMultiplierTech]
-//}
-
 func (g *Game) addNewPlayer(u *user.User) {
 	p := CreatePlayer(g, u)
 	g.Playerers = append(g.Playerers, p)
@@ -246,7 +229,9 @@ func (p *Player) CanClick(a *Area) bool {
 	if p == nil {
 		return false
 	}
-	switch g := p.Game(); {
+
+	g := p.Game()
+	switch {
 	case !p.User().IsAdminOrCurrent(g.CTX()):
 		return false
 	case g.Phase == NewEra:

@@ -133,7 +133,8 @@ func (client Client) update(prefix string) gin.HandlerFunc {
 			c.Redirect(http.StatusSeeOther, homePath)
 			return
 		case actionType == game.Cache:
-			client.Cache.SetDefault(g.UndoKey(c), g)
+			mkey := g.UndoKey(c)
+			client.Cache.SetDefault(mkey, g)
 		case actionType == game.Save:
 			err := client.save(c, g)
 			if err != nil {
@@ -191,7 +192,8 @@ func (client Client) save(c *gin.Context, g *Game) error {
 			return err
 		}
 
-		client.Cache.Delete(g.UndoKey(c))
+		mkey := g.UndoKey(c)
+		client.Cache.Delete(mkey)
 		return nil
 	})
 	return err
@@ -222,7 +224,8 @@ func (client Client) saveWith(c *gin.Context, g *Game, ks []*datastore.Key, es [
 			return err
 		}
 
-		client.Cache.Delete(g.UndoKey(c))
+		mkey := g.UndoKey(c)
+		client.Cache.Delete(mkey)
 		return nil
 	})
 	return err
@@ -516,7 +519,7 @@ func (client Client) mcGet(c *gin.Context, g *Game) error {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	mkey := g.GetHeader().UndoKey(c)
+	mkey := g.UndoKey(c)
 	item, found := client.Cache.Get(mkey)
 	if !found {
 		return fmt.Errorf("game not found")
@@ -526,6 +529,7 @@ func (client Client) mcGet(c *gin.Context, g *Game) error {
 	if !ok {
 		return fmt.Errorf("item not a *Game")
 	}
+	g2.SetCTX(c)
 
 	g = g2
 	cu := user.CurrentFrom(c)
