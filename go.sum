@@ -49,6 +49,8 @@ github.com/SlothNinja/game v0.0.0-20200403024413-6ec55c722e60 h1:pLz1JkALoxwckt+
 github.com/SlothNinja/game v0.0.0-20200403024413-6ec55c722e60/go.mod h1:K/jc4iGjDcbSMVE5sBm3F1j9v47W4TaaqYy8+S18jFY=
 github.com/SlothNinja/game v0.0.0-20200408230610-c90eea60462f h1:p9EgGJzjGvmD47OSRBAIh9ml0vHm15L0y9lnj8Ymwx0=
 github.com/SlothNinja/game v0.0.0-20200408230610-c90eea60462f/go.mod h1:K/jc4iGjDcbSMVE5sBm3F1j9v47W4TaaqYy8+S18jFY=
+github.com/SlothNinja/game v0.0.0-20200408234815-10c3f37bc380 h1:ZFNUBs8Jhq8qrE4dBpACb5eYBDIct3An5HsUqw/l1wY=
+github.com/SlothNinja/game v0.0.0-20200408234815-10c3f37bc380/go.mod h1:K/jc4iGjDcbSMVE5sBm3F1j9v47W4TaaqYy8+S18jFY=
 github.com/SlothNinja/gin-render v0.0.0-20200211051850-fbcc24764f62 h1:v9rQxAHRVujHIRnEt4jMsVNbrR9aSh9UMmEPt1/6XEo=
 github.com/SlothNinja/gin-render v0.0.0-20200211051850-fbcc24764f62/go.mod h1:Aby+/1P+1GWPN2+O+YRzr++dnRUOJtUl4/1ySkBYFrg=
 github.com/SlothNinja/glicko v0.0.0-20200212023639-f1ccdd954e0a h1:Q3KYPblyWuNmtV61DuCX+h9jsQUj4I5hVvP9IqjHzns=
@@ -407,6 +409,7 @@ golang.org/x/tools v0.0.0-20200321014904-268ba720d32c/go.mod h1:Sl4aGygMT6LrqrWc
 golang.org/x/tools v0.0.0-20200331025713-a30bf2db82d4/go.mod h1:Sl4aGygMT6LrqrWclx+PTx3U+LnKx/seiNR+3G19Ar8=
 golang.org/x/tools v0.0.0-20200402223321-bcf690261a44 h1:bMm0eoDiGkM5VfIyKjxDvoflW5GLp7+VCo+60n8F+TE=
 golang.org/x/tools v0.0.0-20200402223321-bcf690261a44/go.mod h1:EkVYQZoAsY45+roYkvgYkIh4xh/qjgUK9TdY2XT94GE=
+golang.org/x/tools v0.0.0-20200408132156-9ee5ef7a2c0d h1:2DXIdtvIYvvWOcAOsX81FwOUBoQoMZhosWn7KjXEl94=
 golang.org/x/tools v0.0.0-20200408132156-9ee5ef7a2c0d/go.mod h1:EkVYQZoAsY45+roYkvgYkIh4xh/qjgUK9TdY2XT94GE=
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=

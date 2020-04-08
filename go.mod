@@ -7,7 +7,7 @@ require (
 	github.com/SlothNinja/codec v0.0.0-20200403023556-e26721965106
 	github.com/SlothNinja/color v0.0.0-20200403021216-479b35ba579a
 	github.com/SlothNinja/contest v0.0.0-20200403023759-bcfca8b2ea81
-	github.com/SlothNinja/game v0.0.0-20200408230610-c90eea60462f
+	github.com/SlothNinja/game v0.0.0-20200408234815-10c3f37bc380
 	github.com/SlothNinja/log v0.0.2
 	github.com/SlothNinja/memcache v0.0.0-20200321195207-184761e76825
 	github.com/SlothNinja/mlog v0.0.0-20200403025041-0c44309873f2
