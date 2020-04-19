@@ -79,10 +79,12 @@ func (g *Game) Update(c *gin.Context) (tmpl string, act game.ActionType, err err
 		tmpl, act, err = g.adminHeader(c)
 	case "admin-cities":
 		tmpl, act, err = g.adminCities(c)
-		//	"admin-area":               adminArea,
+	case "admin-area":
+		tmpl, act, err = g.adminArea(c)
+		//	case "admin-company":
+		//		tmpl, act, err = g.adminCompany(c)
 		//	"admin-patch":              adminPatch,
 		//	"admin-player":             adminPlayer,
-		//	"admin-company":            adminCompany,
 		//	"admin-player-new-company": adminPlayerNewCompany,
 	default:
 		tmpl, act, err = "indonesia/flash_notice", game.None, sn.NewVError("%v is not a valid action.", a)

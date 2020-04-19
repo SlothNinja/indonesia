@@ -3,10 +3,12 @@ package indonesia
 import (
 	"fmt"
 	"html/template"
+	"strconv"
 	"strings"
 
 	"github.com/SlothNinja/color"
 	"github.com/SlothNinja/game"
+	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/gin-gonic/gin"
 )
@@ -1287,6 +1289,55 @@ var areaFields = sslice{
 //	return "", game.Save, nil
 //}
 //
+
+func (g *Game) adminArea(c *gin.Context) (string, game.ActionType, error) {
+	err := g.validateAdminAction(c)
+	if err != nil {
+		return "indonesia/flash_notice", game.None, err
+	}
+
+	obj := struct {
+		RemoveProducer bool   `form:"RemoveProducer"`
+		AddProducerFor string `form:"AddProducerFor"`
+	}{}
+
+	err = c.ShouldBind(&obj)
+	if err != nil {
+		return "indonesia/flash_notice", game.None, err
+	}
+	log.Debugf("obj: %#v", obj)
+
+	area := g.SelectedArea()
+	log.Debugf("area: %#v", area)
+
+	if obj.RemoveProducer {
+		company := area.Producer.Company()
+		area.Producer = nil
+		if company != nil {
+			company.RemoveArea(area)
+		}
+	}
+
+	if obj.AddProducerFor != "none" && obj.AddProducerFor != "" {
+		var company *Company
+		splits := strings.Split(obj.AddProducerFor, "-")
+		if len(splits) == 2 {
+			p := g.PlayerBySID(splits[0])
+			slot := -1
+			v, err := strconv.Atoi(splits[1])
+			if err != nil {
+				return "indonesia/flash_notice", game.None, err
+			}
+			slot = v
+			company = p.Slots[slot-1].Company
+			area.AddProducer(company)
+			company.AddArea(area)
+		}
+	}
+
+	return "", game.Save, err
+}
+
 //func (g *Game) adminArea(c *gin.Context) (string, game.ActionType, error) {
 //	if err := g.validateAdminAction(); err != nil {
 //		return "indonesia/flash_notice", game.None, err
