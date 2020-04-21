@@ -96,7 +96,7 @@ func (g *Game) SendEndGameNotifications(c *gin.Context) error {
 	g.Status = game.Completed
 
 	ms := make([]mailjet.InfoMessagesV31, len(g.Players()))
-	subject := fmt.Sprintf("SlothNinja Games: Indonesia #%d Has Ended", g.ID)
+	subject := fmt.Sprintf("SlothNinja Games: Indonesia #%d Has Ended", g.ID())
 
 	var body string
 	for _, p := range g.Players() {
