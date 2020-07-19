@@ -10,65 +10,76 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (g *Game) selectArea(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) selectArea(c *gin.Context) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateSelectArea(c); err != nil {
-		tmpl, act = "indonesia/flash_notice", game.None
-		return
+	err := g.validateSelectArea(c)
+	if err != nil {
+		return "indonesia/flash_notice", game.None, err
 	}
 
 	cp := g.CurrentPlayer()
-	act = game.Cache
 	switch g.AdminAction {
 	case "admin-header":
-		tmpl = "indonesia/admin/header_dialog"
+		return "indonesia/admin/header_dialog", game.Cache, nil
 	case "admin-player":
-		tmpl = "indonesia/admin/player_dialog"
+		return "indonesia/admin/player_dialog", game.Cache, nil
 	case "admin-area":
-		tmpl = "indonesia/admin/area_dialog"
+		return "indonesia/admin/area_dialog", game.Cache, nil
 	case "admin-company":
-		tmpl = "indonesia/admin/company_dialog"
+		return "indonesia/admin/company_dialog", game.Cache, nil
 	default:
 		switch {
 		case cp.CanSelectCard():
-			tmpl, err = g.playCard(c)
+			tmpl, err := g.playCard(c)
+			return tmpl, game.Cache, err
 		case cp.CanPlaceCity():
-			tmpl, err = g.placeCity(c)
+			tmpl, err := g.placeCity(c)
+			return tmpl, game.Cache, err
 		case cp.CanAcquireCompany():
-			tmpl, err = g.acquireCompany(c)
+			tmpl, err := g.acquireCompany(c)
+			return tmpl, game.Cache, err
 		case cp.CanResearch():
-			tmpl, err = g.conductResearch(c)
+			tmpl, err := g.conductResearch(c)
+			return tmpl, game.Cache, err
 		case cp.CanSelectCompanyToOperate():
-			tmpl, err = g.selectCompany(c)
+			tmpl, err := g.selectCompany(c)
+			return tmpl, game.Cache, err
 		case cp.CanSelectGood():
-			tmpl, err = g.selectGood(c)
+			tmpl, err := g.selectGood(c)
+			return tmpl, game.Cache, err
 		case cp.CanSelectShip():
-			tmpl, err = g.selectShip(c)
+			tmpl, err := g.selectShip(c)
+			return tmpl, game.Cache, err
 		case cp.CanSelectCityOrShip():
-			tmpl, err = g.selectCityOrShip(c)
+			tmpl, err := g.selectCityOrShip(c)
+			return tmpl, game.Cache, err
 		case cp.CanExpandProduction():
-			tmpl, err = g.expandProduction(c)
+			tmpl, err := g.expandProduction(c)
+			return tmpl, game.Cache, err
 		case cp.canExpandShipping():
-			tmpl, err = g.expandShipping(c)
+			tmpl, err := g.expandShipping(c)
+			return tmpl, game.Cache, err
 		case cp.CanAnnounceMerger():
-			tmpl, err = g.selectCompany1(c)
+			tmpl, err := g.selectCompany1(c)
+			return tmpl, game.Cache, err
 		case cp.CanAnnounceSecondCompany():
-			tmpl, err = g.selectCompany2(c)
+			tmpl, err := g.selectCompany2(c)
+			return tmpl, game.Cache, err
 		case cp.canPlaceInitialProduct():
-			tmpl, err = g.placeInitialProduct(c)
+			tmpl, err := g.placeInitialProduct(c)
+			return tmpl, game.Cache, err
 		case cp.canPlaceInitialShip():
-			tmpl, err = g.placeInitialShip(c)
+			tmpl, err := g.placeInitialShip(c)
+			return tmpl, game.Cache, err
 		case cp.CanCreateSiapFaji():
-			tmpl, err = g.removeRiceSpice(c)
+			tmpl, err := g.removeRiceSpice(c)
+			return tmpl, game.Cache, err
 		default:
-			tmpl = "indonesia/flash_notice"
-			act = game.None
-			err = sn.NewVError("Can't find action for selection.")
+			return "indonesia/flash_notice", game.None, sn.NewVError("Can't find action for selection.")
 		}
 	}
-	return
 }
 
 func (g *Game) validateSelectArea(c *gin.Context) (err error) {

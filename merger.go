@@ -298,11 +298,11 @@ func (s *SiapFajiMerger) Company() *Company {
 }
 
 func (s *SiapFajiMerger) GoodsToRemove() int {
-	if c := s.Company(); c != nil {
+	c := s.Company()
+	if c != nil {
 		return c.Production() - s.Production
-	} else {
-		return 0
 	}
+	return 0
 }
 
 func (s *SiapFajiMerger) init(g *Game) {
@@ -567,7 +567,10 @@ func (g *Game) startMergerResolution(c *gin.Context) {
 	if c1Goods != SiapFaji && com.Goods() == SiapFaji {
 		g.newSiapFajiMerger(com)
 		g.siapFajiCreation(c)
-		return
+		if !g.SiapFajiMerger.canEndRiceSpiceRemoval() {
+			return
+		}
+		g.SiapFajiMerger.Company().toSiapFaji()
 	}
 
 	// Continue with next player or start next phase
@@ -681,12 +684,32 @@ func (g *Game) siapFajiCreation(c *gin.Context) {
 	owner := g.SiapFajiMerger.owner()
 	g.setCurrentPlayers(owner)
 	owner.PerformedAction = false
+	g.SiapFajiMerger.removeAreasAdjacentCompetitor()
+}
+
+func (m *SiapFajiMerger) canEndRiceSpiceRemoval() bool {
+	return m.GoodsToRemove() <= 0 && m.Company().Zones.contiguous()
 }
 
 func (p *Player) CanCreateSiapFaji() bool {
 	return p != nil && p.Game().Phase == Mergers && p.Game().SubPhase == MSiapFajiCreation &&
 		p.Game().SiapFajiMerger != nil && !p.PerformedAction && p.IsCurrentPlayer() &&
 		p.ID() == p.Game().SiapFajiMerger.OwnerID
+}
+
+func (m *SiapFajiMerger) removeAreasAdjacentCompetitor() {
+	log.Debugf("Entering")
+	defer log.Debugf("Exiting")
+
+	comp := m.Company()
+	if comp == nil {
+		return
+	}
+	for _, a := range comp.Areas() {
+		if a.adjacentAreaHasCompetingCompanyFor(comp) {
+			comp.remove(a)
+		}
+	}
 }
 
 func (g *Game) removeRiceSpice(c *gin.Context) (string, error) {
@@ -701,7 +724,6 @@ func (g *Game) removeRiceSpice(c *gin.Context) (string, error) {
 	cp := g.CurrentPlayer()
 	com := m.Company()
 	goods := a.Producer.Goods
-	a.Producer = nil
 	com.remove(a)
 
 	// Log
@@ -709,14 +731,15 @@ func (g *Game) removeRiceSpice(c *gin.Context) (string, error) {
 	restful.AddNoticef(c, string(e.HTML(c)))
 
 	// Return if more goods to remove
-	if m.GoodsToRemove() != 0 {
+	if !m.canEndRiceSpiceRemoval() {
 		return "indonesia/remove_goods_update", nil
 	}
 
 	// Convert remaining goods to siap faji
-	for _, a := range m.Company().Areas() {
-		a.Producer.Goods = SiapFaji
-	}
+	// for _, a := range m.Company().Areas() {
+	// 	a.Producer.Goods = SiapFaji
+	// }
+	m.Company().toSiapFaji()
 
 	// Merge zones
 	if len(com.Zones) > 1 {
@@ -726,7 +749,13 @@ func (g *Game) removeRiceSpice(c *gin.Context) (string, error) {
 	// Reset game state for next merger round.
 	g.SiapFajiMerger = nil
 	cp.PerformedAction = true
-	return "", nil
+	return "indonesia/remove_goods_update", nil
+}
+
+func (comp *Company) toSiapFaji() {
+	for _, a := range comp.Areas() {
+		a.Producer.Goods = SiapFaji
+	}
 }
 
 func (g *Game) validateRemoveRiceSpice(c *gin.Context) (m *SiapFajiMerger, a *Area, err error) {
@@ -751,15 +780,10 @@ func (g *Game) validateRemoveRiceSpice(c *gin.Context) (m *SiapFajiMerger, a *Ar
 		err = sn.NewVError("Expected %q phase but has %q phase.", PhaseNames[Mergers], PhaseNames[g.Phase])
 	case g.SubPhase != MSiapFajiCreation:
 		err = sn.NewVError("Expected %q subphase but has %q subphase.", SubPhaseNames[MSiapFajiCreation], SubPhaseNames[g.SubPhase])
-	case m.GoodsToRemove() == 0 && !m.Company().Zones.contiguous():
-		err = sn.NewVError("Each zone must be contiguous after removal.")
-	case m.GoodsToRemove() == 0:
-		for _, a := range m.Company().Areas() {
-			if a.adjacentAreaHasCompetingCompanyFor(m.Company()) {
-				err = sn.NewVError("You must remove rice/spice that are adjacent to siap faji of another company.")
-				break
-			}
-		}
+	// case m.GoodsToRemove() > 0:
+	// 	err = sn.NewVError("you must remove %d more rice/spice", m.GoodsToRemove())
+	case !m.Company().Zones.contiguous():
+		err = sn.NewVError("each zone must be contiguous after removal.")
 	}
 	return
 }

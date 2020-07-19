@@ -361,35 +361,6 @@ func (g *Game) CurrentPlayer() (player *Player) {
 	return
 }
 
-type sslice []string
-
-func (ss sslice) include(s string) bool {
-	for _, str := range ss {
-		if str == s {
-			return true
-		}
-	}
-	return false
-}
-
-//var headerValues = sslice{
-//	"Header.Title",
-//	"Header.Turn",
-//	"Header.Phase",
-//	"Header.SubPhase",
-//	"Header.Round",
-//	"Header.Password",
-//	"Header.CPUserIndices",
-//	"Header.UserIDS",
-//	"Header.WinnerIDS",
-//	"Header.Status",
-//	"State.OverrideDeliveries",
-//	"State.CityStones",
-//	"State.SiapFajiMerger.OwnerID",
-//	"State.SiapFajiMerger.OwnerSlot",
-//	"State.SiapFajiMerger.Production",
-//}
-
 func (g *Game) adminHeader(c *gin.Context) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
@@ -425,12 +396,6 @@ func (g *Game) adminHeader(c *gin.Context) (string, game.ActionType, error) {
 		return "", game.None, err
 	}
 
-	// 	h := game.NewHeader(c, nil, 0)
-	// 	if err = restful.BindWith(c, h, binding.FormPost); err != nil {
-	// 		act = game.None
-	// 		return
-	// 	}
-
 	g.Title = h.Title
 	g.Turn = h.Turn
 	g.Phase = h.Phase
@@ -444,7 +409,6 @@ func (g *Game) adminHeader(c *gin.Context) (string, game.ActionType, error) {
 	g.CPUserIndices = h.CPUserIndices
 	g.WinnerIDS = h.WinnerIDS
 	g.Status = h.Status
-	// act = game.Save
 	return "", game.Save, nil
 }
 

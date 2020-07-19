@@ -834,15 +834,12 @@ func (g *Game) initAreas() {
 
 func (a *Area) adjacentAreaHasCompetingCompanyFor(c *Company) bool {
 	goods := c.Goods()
-	//	a.g.debugf("Area %d adjacentAreaHasCompetingCompany for %s", a.ID, goods)
 	for _, area := range a.AdjacentAreas() {
-		if company := area.GoodsCompany(); company != nil && company != c &&
-			company.Goods() == goods {
-			//			a.g.debugf("Area %d true due to area %d.", a.ID, area.ID)
+		company := area.GoodsCompany()
+		if company != nil && company != c && company.Goods() == goods {
 			return true
 		}
 	}
-	//	a.g.debugf("Area %d false.", a.ID)
 	return false
 }
 
@@ -1239,57 +1236,6 @@ func (g *Game) freeShippingExpansionAreas() Areas {
 	return expansionAreas
 }
 
-var areaFields = sslice{
-	"City.Size",
-	"City.Delivered",
-	"Producer.OwnerID",
-	"Producer.Slot",
-	"Producer.Goods",
-	"Shippers.0.OwnerID",
-	"Shippers.0.Slot",
-	"Shippers.0.ShipType",
-	"Shippers.0.Ships",
-	"Shippers.0.Delivered",
-	"Shippers.1.OwnerID",
-	"Shippers.1.Slot",
-	"Shippers.1.ShipType",
-	"Shippers.1.Ships",
-	"Shippers.1.Delivered",
-	"Shippers.2.OwnerID",
-	"Shippers.2.Slot",
-	"Shippers.2.ShipType",
-	"Shippers.2.Ships",
-	"Shippers.2.Delivered",
-	"Shippers.3.OwnerID",
-	"Shippers.3.Slot",
-	"Shippers.3.ShipType",
-	"Shippers.3.Ships",
-	"Shippers.3.Delivered",
-	"Shippers.4.OwnerID",
-	"Shippers.4.Slot",
-	"Shippers.4.ShipType",
-	"Shippers.4.Ships",
-	"Shippers.4.Delivered",
-	"Shippers.4.OwnerID",
-	"Shippers.4.Slot",
-	"Shippers.4.ShipType",
-	"Shippers.4.Ships",
-	"Shippers.4.Delivered",
-	"Used",
-}
-
-//func adminPatch(g *Game, form url.Values) (string, game.ActionType, error) {
-//	if err := g.validateAdminAction(); err != nil {
-//		return "indonesia/flash_notice", game.None, err
-//	}
-//
-//	g.Areas[Sea115] = g.newArea(Sea115)
-//	g.Areas[Sea116] = g.newArea(Sea116)
-//
-//	return "", game.Save, nil
-//}
-//
-
 func (g *Game) adminArea(c *gin.Context) (string, game.ActionType, error) {
 	err := g.validateAdminAction(c)
 	if err != nil {
@@ -1337,108 +1283,6 @@ func (g *Game) adminArea(c *gin.Context) (string, game.ActionType, error) {
 
 	return "", game.Save, err
 }
-
-//func (g *Game) adminArea(c *gin.Context) (string, game.ActionType, error) {
-//	if err := g.validateAdminAction(); err != nil {
-//		return "indonesia/flash_notice", game.None, err
-//	}
-//
-//	area := g.SelectedArea()
-//	removeShipper := -1
-//	removeProducer := false
-//	removeCity := false
-//	c := result.GinFrom(c)
-//	for key := range c.PostForm() {
-//		//		g.debugf("Values: %#v", values)
-//		switch key {
-//		case "City.Size":
-//			if value := values.Get(key); value == "0" {
-//				removeCity = true
-//			}
-//		case "RemoveProducer":
-//			if value := values.Get(key); value == "true" {
-//				removeProducer = true
-//			}
-//		case "AddProducerFor":
-//			value := values.Get(key)
-//			var company *Company
-//			if splits := strings.Split(value, "-"); len(splits) == 2 {
-//				p := g.PlayerBySID(splits[0])
-//				slot := -1
-//				if v, err := strconv.Atoi(splits[1]); err != nil {
-//					return "indonesia/flash_notice", game.None, err
-//				} else {
-//					slot = v
-//				}
-//				company = p.Slots[slot-1].Company
-//				area.AddProducer(company)
-//				company.AddArea(area)
-//			}
-//		case "AddShipperFor":
-//			value := values.Get(key)
-//			var company *Company
-//			if splits := strings.Split(value, "-"); len(splits) == 2 {
-//				p := g.PlayerBySID(splits[0])
-//				slot := -1
-//				if v, err := strconv.Atoi(splits[1]); err != nil {
-//					return "indonesia/flash_notice", game.None, err
-//				} else {
-//					slot = v
-//				}
-//				company = p.Slots[slot-1].Company
-//				company.AddShipIn(area)
-//			}
-//		case "RemoveShipper":
-//			value := values.Get(key)
-//			if value != "none" {
-//				if v, err := strconv.Atoi(value); err == nil && v >= 0 && v < len(area.Shippers) {
-//					removeShipper = v
-//				}
-//			}
-//		}
-//		if !areaFields.include(key) {
-//			delete(values, key)
-//		}
-//	}
-//
-//	schema.RegisterConverter(Goods(0), convertGoods)
-//	schema.RegisterConverter(ShipType(0), convertShipType)
-//	if err := schema.Decode(area, values); err != nil {
-//		return "indonesia/flash_notice", game.None, err
-//	}
-//	if removeShipper != -1 {
-//		if removeShipper == 0 {
-//			area.Shippers = make(Shippers, 0)
-//		} else {
-//			area.Shippers = append(area.Shippers[:removeShipper], area.Shippers[removeShipper+1:]...)
-//		}
-//	}
-//	if removeProducer {
-//		company := area.Producer.Company()
-//		area.Producer = nil
-//		if company != nil {
-//			company.RemoveArea(area)
-//		}
-//	}
-//	if removeCity {
-//		area.City = nil
-//	}
-//	return "", game.Save, nil
-//}
-//
-//func convertGoods(value string) reflect.Value {
-//	if v, err := strconv.ParseInt(value, 10, 0); err == nil {
-//		return reflect.ValueOf(Goods(v))
-//	}
-//	return reflect.Value{}
-//}
-//
-//func convertShipType(value string) reflect.Value {
-//	if v, err := strconv.ParseInt(value, 10, 0); err == nil {
-//		return reflect.ValueOf(ShipType(v))
-//	}
-//	return reflect.Value{}
-//}
 
 var imageMapArea = map[AreaID]string{
 	Aceh0:               "91,192,85,184,79,181,67,168,67,162,58,157,53,144,50,142,50,137,46,134,46,115,50,110,72,109,76,114,82,117,93,129,107,129,110,132,123,132,123,138,120,151,115,164,105,179,97,187",

@@ -79,12 +79,6 @@ func (c *Company) ShipsIn(a *Area) int {
 	return ships
 }
 
-//func (c *Company) resetDelivered() {
-//	for _, z := range c.Zones {
-//                z.Delivered = 0
-//	}
-//}
-
 func (c *Company) deliveredAllGoods() bool {
 	return c.IsProductionCompany() && c.Delivered() >= len(c.Areas())
 }
@@ -146,19 +140,6 @@ func (c *Company) AddShipIn(a *Area) {
 func (c *Company) AddArea(a *Area) {
 	c.Zones = c.Zones.addZones(newZone(c.g, AreaIDS{a.ID}))
 }
-
-//	if !c.Areas().include(a) {
-//		for _, zone := range c.Zones {
-//			for _, area := range zone.Areas() {
-//				if area.AdjacentAreas().include(a) {
-//					zone.AreaIDS = append(zone.AreaIDS, a.ID)
-//					return
-//				}
-//			}
-//		}
-//		c.Zones = append(c.Zones, newZone(c.g, AreaIDS{a.ID}))
-//	}
-// }
 
 func (c *Company) RemoveArea(a *Area) {
 	if c.Areas().include(a) {
@@ -280,48 +261,6 @@ func (g *Game) resetCompanies() {
 	}
 }
 
-//func (c *Company) maxDelivery() int {
-//	if c.Goods() == Shipping {
-//		return 0
-//	}
-//	routes, production := c.deliveryRoutes(), c.Production()
-//	c.g.debugf("maxDelivery Routes: %s", routes)
-//	switch {
-//	case len(routes) < 2:
-//		return len(routes)
-//	case production < 2:
-//		return c.Production()
-//	default:
-//		areas := c.g.Areas.copy()
-//		c.g.debugf("maxDelivery c.Areas: %#v", c.Areas())
-//		c.g.debugf("maxDelivery Areas: %#v", areas)
-//		count := 0
-//		for _, route := range routes {
-//			var ok bool
-//			if areas, ok = areas.useRoute(route); ok {
-//				count += 1
-//			}
-//			if count == production {
-//				return count
-//			}
-//		}
-//		return count
-//	}
-//}
-//
-//func (as Areas) useRoute(route *Route) (Areas, bool) {
-//	areas := as.copy()
-//	for _, aid := range route.AreaIDS {
-//		area := areas[aid]
-//		if !area.Used {
-//			area.Used = true
-//		} else {
-//			return as, false
-//		}
-//	}
-//	return areas, true
-//}
-
 func (a *Area) demands(goods Goods) bool {
 	return a.City != nil && a.City.demands(goods)
 }
@@ -345,61 +284,6 @@ func (cs Cities) demandFor(goods Goods) int {
 	}
 	return demand
 }
-
-//type Route struct {
-//	g       *Game
-//	Zone    *Zone
-//	Goods   Goods
-//	Shipper *Shipper
-//	AreaIDS AreaIDS
-//}
-//
-//type Routes []*Route
-//
-//func (r *Route) lastArea() *Area {
-//	return r.g.Areas[r.AreaIDS[len(r.AreaIDS)-1]]
-//}
-//
-//func (r *Route) copy() *Route {
-//	l := len(r.AreaIDS)
-//	route := &Route{
-//		g:       r.g,
-//		Zone:    r.Zone,
-//		Goods:   r.Goods,
-//		Shipper: r.Shipper,
-//		AreaIDS: make(AreaIDS, l),
-//	}
-//	if elements := copy(route.AreaIDS, r.AreaIDS); elements == l {
-//		return route
-//	} else {
-//		return nil
-//	}
-//}
-//
-//func (r *Route) include(a *Area) bool {
-//	return r.AreaIDS.include(a.ID)
-//}
-//
-//func (r *Route) add(a *Area) *Route {
-//	r.AreaIDS = append(r.AreaIDS, a.ID)
-//	return r
-//}
-//
-//func (r *Route) String() string {
-//	s := ""
-//	for _, id := range r.AreaIDS {
-//		s += fmt.Sprintf("%d -> ", id)
-//	}
-//	return s
-//}
-//
-//func (rs Routes) String() string {
-//	s := ""
-//	for i, r := range rs {
-//		s += fmt.Sprintf("Route %d: %s", i, r)
-//	}
-//	return s
-//}
 
 func hasAShipper(a *Area) bool {
 	return len(a.Shippers) > 0
@@ -448,174 +332,11 @@ func (ss Shippers) haveCapacity() bool {
 	return false
 }
 
-//func (c *Company) deliveryRoutes() Routes {
-//	c.g.debugf("enter c.deliveryRoutes")
-//	defer c.g.debugf("exit c.deliveryRoutes")
-//	if goods := c.Goods(); goods == Shipping {
-//		return Routes{}
-//	} else {
-//		var routes Routes
-//		for _, zone := range c.Zones {
-//			if newRoutes := zone.deliveryRoutes(goods); newRoutes != nil {
-//				routes = append(routes, newRoutes...)
-//			}
-//		}
-//		return routes
-//	}
-//}
-//
-//func extendRoute(route *Route, areas Areas) Routes {
-//	route.g.debugf("enter extendRoute: route: %s areas: %#v", route, areas)
-//	defer route.g.debugf("exit extendRoute")
-//	var routes Routes
-//	for _, area := range areas {
-//		route.g.debugf("Area ID: %d", area.ID)
-//		if !route.AreaIDS.include(area.ID) {
-//			route.g.debugf("Area %d demands %s %v", area.ID, route.Goods, area.demands(route.Goods))
-//			switch {
-//			case area.demands(route.Goods):
-//				r := route.copy()
-//				r.AreaIDS = append(r.AreaIDS, area.ID)
-//				routes = append(routes, r)
-//			case route.Shipper == nil && area.hasAShipper():
-//				for _, shipper := range area.Shippers {
-//					r := route.copy()
-//					r.AreaIDS = append(r.AreaIDS, area.ID)
-//					r.Shipper = shipper
-//					if newRoutes := extendRoute(r, area.adjacentAreas()); newRoutes != nil {
-//						routes = append(routes, newRoutes...)
-//					}
-//				}
-//			case area.hasShipper(route.Shipper):
-//				r := route.copy()
-//				r.AreaIDS = append(r.AreaIDS, area.ID)
-//				if newRoutes := extendRoute(r, area.adjacentAreas()); newRoutes != nil {
-//					for i := 0; i < route.Shipper.HullSize(); i++ {
-//						routes = append(routes, newRoutes...)
-//					}
-//				}
-//			}
-//		}
-//	}
-//	return routes
-//}
-//
-//func (g *Game) expandRoutes(rs Routes, goods Goods) Routes {
-//	var routes Routes
-//	for _, route := range rs {
-//		max := 1000
-//		for _, aid := range route.AreaIDS {
-//			area := g.Areas[aid]
-//			g.debugf("Area: %#v", area)
-//			g.debugf("len(area.Shippers) > 0 : %v", len(area.Shippers))
-//			g.debugf("area.Shippers %v", area.Shippers)
-//			switch {
-//			case area.Producer != nil:
-//				if goods := len(area.GoodsCompany().ZoneFor(area).AreaIDS); goods < max {
-//					max = goods
-//				}
-//			case len(area.Shippers) > 0:
-//				for _, shipper := range area.Shippers {
-//					if shipper == route.Shipper {
-//						if capacity := shipper.HullSize(); capacity < max {
-//							max = capacity
-//						}
-//					}
-//				}
-//			default:
-//				if capacity := area.City.Size - area.City.Delivered[goods]; capacity < max {
-//					max = capacity
-//				}
-//			}
-//		}
-//		for i := 0; i < max; i++ {
-//			routes = append(routes, route)
-//		}
-//	}
-//	return routes
-//}
-
-//var companyValues = sslice{"Slot", "Merged", "Operated", "ShipType"}
-//
-//func adminCompany(g *Game, form url.Values) (string, game.ActionType, error) {
-//	if err := g.adminUpdateCompany(companyValues); err != nil {
-//		return "indonesia/flash_notice", game.None, err
-//	}
-//
-//	return "", game.Save, nil
-//}
-//
-//func (g *Game) adminUpdateCompany(ss sslice) error {
-//	if err := g.validateAdminAction(); err != nil {
-//		return err
-//	}
-//
-//	values, err := g.getValues()
-//	if err != nil {
-//		return err
-//	}
-//
-//	company := g.SelectedCompany()
-//	var d *Deed
-//	for key := range values {
-//		if !ss.include(key) {
-//			//			g.debugf("Key: %q", key)
-//			var k0, k1 string
-//			if keys := strings.Split(key, "-"); len(keys) > 1 {
-//				k0, k1 = keys[0], keys[1]
-//			} else {
-//				k0 = keys[0]
-//			}
-//			switch k0 {
-//			case "AddZone":
-//				if values.Get(key) == "true" {
-//					company.Zones = append(company.Zones, newZone(g, AreaIDS{}))
-//				}
-//			case "AddDeed":
-//				if v := values.Get(key); v != "none" {
-//					d = g.Deeds().get(v)
-//				}
-//			case "AddAreaZone":
-//				if value := values.Get(key); value != "none" {
-//					if id, err := strconv.Atoi(value); err == nil {
-//						if zindex, err := strconv.Atoi(k1); err == nil {
-//							company.Zones[zindex].AreaIDS =
-//								append(company.Zones[zindex].AreaIDS, AreaID(id))
-//						}
-//					}
-//				}
-//			case "RemoveAreaZone":
-//				if value := values.Get(key); value != "none" {
-//					if id, err := strconv.Atoi(value); err == nil {
-//						if zindex, err := strconv.Atoi(k1); err == nil {
-//							zone := company.Zones[zindex]
-//							zone.AreaIDS = zone.AreaIDS.remove(AreaID(id))
-//							if len(zone.AreaIDS) == 0 {
-//								company.removeZoneAt(zindex)
-//							}
-//						}
-//					}
-//				}
-//			}
-//			delete(values, key)
-//		}
-//	}
-//
-//	schema.RegisterConverter(ShipType(0), convertShipType)
-//	if err := schema.Decode(company, values); err != nil {
-//		return err
-//	}
-//	if d != nil {
-//		company.Deeds = append(company.Deeds, d)
-//	}
-//	return nil
-//}
-
 func (c *Company) remove(a *Area) {
 	var zones Zones
 	for _, zone := range c.Zones {
+		a.Producer = nil
 		zone.AreaIDS = zone.AreaIDS.remove(a.ID)
-		//		c.g.debugf("len(zone.AreaIDS)", len(zone.AreaIDS))
 		if len(zone.AreaIDS) > 0 {
 			zones = append(zones, zone)
 		}
@@ -665,59 +386,6 @@ func (c *Company) deliveredAdjacentShippingCapacity() bool {
 	return c.IsProductionCompany() && c.Delivered() >= c.adjacentShippingCapacity()
 }
 
-//func (c *Company) madeAllRequiredDeliveries() bool {
-//	return c.IsProductionCompany() && c.Delivered() == c.requiredDeliveries()
-//}
-
-//func (c *Company) connectedCityDemand() int {
-//	demand, goods := 0, c.Goods()
-//	totalDemand := c.g.Cities().demandFor(goods)
-//	maxZoneShipCap := c.maxZoneShipCap()
-//	cappedDemand := min(totalDemand, maxZoneShipCap, c.Production())
-//	c.g.debugf("totalDemand: %d", totalDemand)
-//	c.g.debugf("maxZoneShipCap: %d", maxZoneShipCap)
-//	c.g.debugf("cappedDemand: %d", cappedDemand)
-//	if cappedDemand == 0 {
-//		return 0
-//	}
-//	for _, city := range c.g.Cities() {
-//		cityDemand := city.connectedDemandFor(c)
-//		demand = min(demand+cityDemand, cappedDemand)
-//		c.g.debugf("cityDemand: %v", cityDemand)
-//		c.g.debugf("demand: %d", demand)
-//		if demand == cappedDemand {
-//			return demand
-//		}
-//	}
-//	return demand
-//}
-//
-//func (c *City) connectedDemandFor(company *Company) int {
-//	demand := 0
-//	goods := company.Goods()
-//	company.g.debugf("City in %s", c.a.Province())
-//	company.g.debugf("Goods: %s", goods)
-//	maxCityDemand := c.demandFor(goods)
-//	company.g.debugf("maxCityDemand: %d", maxCityDemand)
-//	if maxCityDemand == 0 {
-//		return 0
-//	}
-//	for _, zone := range company.Zones {
-//		for _, shipper := range c.shippers() {
-//			shipCap := shipper.capacityBetween(zone, c)
-//			numGoods := len(zone.AreaIDS)
-//			demand = min(demand+min(shipCap, numGoods), maxCityDemand)
-//			company.g.debugf("shipCap: %v", shipCap)
-//			company.g.debugf("numGoods: %v", numGoods)
-//			company.g.debugf("demand: %d", demand)
-//			if demand == maxCityDemand {
-//				return demand
-//			}
-//		}
-//	}
-//	return demand
-//}
-
 func (c *Company) maxZoneShipCap() int {
 	capacity := 0
 	for _, zone := range c.Zones {
@@ -732,14 +400,6 @@ func (c *Company) maxZoneShipCap() int {
 	}
 	return capacity
 }
-
-//func (c *Company) deliveredConnectedCityDemand() bool {
-//	return c.IsProductionCompany() && c.Delivered() >= c.connectedCityDemand()
-//}
-
-//func (c *Company) deliveredRequiredDeliveries() bool {
-//	return c.IsProductionCompany() && c.Delivered() >= c.requiredDeliveries()
-//}
 
 func (c *City) shippers() Shippers {
 	var shippers Shippers
@@ -759,7 +419,6 @@ func (s *Shipper) capacityBetween(z *Zone, c *City) int {
 	if common := zones1.intersection(zones2); common == nil {
 		return 0
 	} else {
-		//		s.g.debugf("common: %#v", common)
 		capacity := 0
 		for _, z := range common {
 			capacity += z.minCapacityFor(s)

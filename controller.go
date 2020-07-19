@@ -54,42 +54,41 @@ func (g *Game) Update(c *gin.Context) (tmpl string, act game.ActionType, err err
 
 	switch a := c.PostForm("action"); a {
 	case "select-area":
-		tmpl, act, err = g.selectArea(c)
+		return g.selectArea(c)
 	case "select-hull-player":
-		tmpl, act, err = g.selectHullPlayer(c)
+		return g.selectHullPlayer(c)
 	case "turn-order-bid":
-		tmpl, act, err = g.placeTurnOrderBid(c)
+		return g.placeTurnOrderBid(c)
 	case "stop-expanding":
-		tmpl, act, err = g.stopExpanding(c)
+		return g.stopExpanding(c)
 	case "accept-proposed-flow":
-		tmpl, act, err = g.acceptProposedFlow(c)
+		return g.acceptProposedFlow(c)
 	case "city-growth":
-		tmpl, act, err = g.cityGrowth(c)
+		return g.cityGrowth(c)
 	case "pass":
-		tmpl, act, err = g.pass(c)
+		return g.pass(c)
 	case "merger-bid":
-		tmpl, act, err = g.mergerBid(c)
+		return g.mergerBid(c)
 	case "undo":
-		tmpl, act, err = g.undoAction(c)
+		return g.undoAction(c)
 	case "redo":
-		tmpl, act, err = g.redoAction(c)
+		return g.redoAction(c)
 	case "reset":
-		tmpl, act, err = g.resetTurn(c)
+		return g.resetTurn(c)
 	case "admin-header":
-		tmpl, act, err = g.adminHeader(c)
+		return g.adminHeader(c)
 	case "admin-cities":
-		tmpl, act, err = g.adminCities(c)
+		return g.adminCities(c)
 	case "admin-area":
-		tmpl, act, err = g.adminArea(c)
+		return g.adminArea(c)
 		//	case "admin-company":
 		//		tmpl, act, err = g.adminCompany(c)
 		//	"admin-patch":              adminPatch,
 		//	"admin-player":             adminPlayer,
 		//	"admin-player-new-company": adminPlayerNewCompany,
 	default:
-		tmpl, act, err = "indonesia/flash_notice", game.None, sn.NewVError("%v is not a valid action.", a)
+		return "indonesia/flash_notice", game.None, sn.NewVError("%v is not a valid action.", a)
 	}
-	return
 }
 
 func (client Client) show(prefix string) gin.HandlerFunc {
@@ -153,8 +152,10 @@ func (client Client) update(prefix string) gin.HandlerFunc {
 		switch jData := jsonFrom(c); {
 		case jData != nil && template == "json":
 			c.JSON(http.StatusOK, jData)
+			return
 		case template == "":
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			return
 		default:
 			cu := user.CurrentFrom(c)
 
@@ -169,6 +170,7 @@ func (client Client) update(prefix string) gin.HandlerFunc {
 				"Errors":    restful.ErrorsFrom(c),
 			}
 			c.HTML(http.StatusOK, template, d)
+			return
 		}
 	}
 }

@@ -24,8 +24,8 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/stretchr/testify v1.6.1 // indirect
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
-	golang.org/x/tools v0.0.0-20200714190737-9048b464a08d // indirect
-	google.golang.org/genproto v0.0.0-20200714145754-f631a03bbd91 // indirect
+	golang.org/x/tools v0.0.0-20200717024301-6ddee64345a6 // indirect
+	google.golang.org/genproto v0.0.0-20200715011427-11fb19a81f2c // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
