@@ -567,7 +567,7 @@ func (g *Game) startMergerResolution(c *gin.Context) {
 	if c1Goods != SiapFaji && com.Goods() == SiapFaji {
 		g.newSiapFajiMerger(com)
 		g.siapFajiCreation(c)
-		if !g.SiapFajiMerger.canEndRiceSpiceRemoval() {
+		if !g.SiapFajiMerger.CanEndRiceSpiceRemoval() {
 			return
 		}
 		g.SiapFajiMerger.Company().toSiapFaji()
@@ -687,7 +687,7 @@ func (g *Game) siapFajiCreation(c *gin.Context) {
 	g.SiapFajiMerger.removeAreasAdjacentCompetitor()
 }
 
-func (m *SiapFajiMerger) canEndRiceSpiceRemoval() bool {
+func (m *SiapFajiMerger) CanEndRiceSpiceRemoval() bool {
 	return m.GoodsToRemove() <= 0 && m.Company().Zones.contiguous()
 }
 
@@ -731,7 +731,7 @@ func (g *Game) removeRiceSpice(c *gin.Context) (string, error) {
 	restful.AddNoticef(c, string(e.HTML(c)))
 
 	// Return if more goods to remove
-	if !m.canEndRiceSpiceRemoval() {
+	if !m.CanEndRiceSpiceRemoval() {
 		return "indonesia/remove_goods_update", nil
 	}
 
