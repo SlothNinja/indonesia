@@ -758,34 +758,35 @@ func (comp *Company) toSiapFaji() {
 	}
 }
 
-func (g *Game) validateRemoveRiceSpice(c *gin.Context) (m *SiapFajiMerger, a *Area, err error) {
+func (g *Game) validateRemoveRiceSpice(c *gin.Context) (*SiapFajiMerger, *Area, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	switch m, a, err = g.SiapFajiMerger, g.SelectedArea(), g.validatePlayerAction(c); {
+	m, a, err := g.SiapFajiMerger, g.SelectedArea(), g.validatePlayerAction(c)
+	switch {
 	case err != nil:
+		return nil, nil, err
 	case g.SiapFajiMerger == nil:
-		err = sn.NewVError("No Siap Faji Merger defined.")
+		return nil, nil, sn.NewVError("No Siap Faji Merger defined.")
 	case g.SiapFajiMerger.Company() == nil:
-		err = sn.NewVError("No Siap Faji Merger company.")
+		return nil, nil, sn.NewVError("No Siap Faji Merger company.")
 	case g.SelectedArea() == nil:
-		err = sn.NewVError("No area selected.")
+		return nil, nil, sn.NewVError("No area selected.")
 	case g.SiapFajiMerger.Company().Goods() != SiapFaji:
-		err = sn.NewVError("Wrong goods for Siap Faji Merger company.")
+		return nil, nil, sn.NewVError("Wrong goods for Siap Faji Merger company.")
 	case g.SelectedArea().Goods() != Rice && g.SelectedArea().Goods() != Spice:
-		err = sn.NewVError("Selected area does not have rice or spice.")
+		return nil, nil, sn.NewVError("Selected area does not have rice or spice.")
 	case !g.SiapFajiMerger.Company().Areas().include(g.SelectedArea()):
-		err = sn.NewVError("Selected Area not part of Siap Faji Merger company.")
+		return nil, nil, sn.NewVError("Selected Area not part of Siap Faji Merger company.")
 	case g.Phase != Mergers:
-		err = sn.NewVError("Expected %q phase but has %q phase.", PhaseNames[Mergers], PhaseNames[g.Phase])
+		return nil, nil, sn.NewVError("Expected %q phase but has %q phase.",
+			PhaseNames[Mergers], PhaseNames[g.Phase])
 	case g.SubPhase != MSiapFajiCreation:
-		err = sn.NewVError("Expected %q subphase but has %q subphase.", SubPhaseNames[MSiapFajiCreation], SubPhaseNames[g.SubPhase])
-	// case m.GoodsToRemove() > 0:
-	// 	err = sn.NewVError("you must remove %d more rice/spice", m.GoodsToRemove())
-	case !m.Company().Zones.contiguous():
-		err = sn.NewVError("each zone must be contiguous after removal.")
+		return nil, nil, sn.NewVError("Expected %q subphase but has %q subphase.",
+			SubPhaseNames[MSiapFajiCreation], SubPhaseNames[g.SubPhase])
+	default:
+		return m, a, nil
 	}
-	return
 }
 
 type removeRiceSpiceEntry struct {

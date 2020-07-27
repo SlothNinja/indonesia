@@ -320,14 +320,23 @@ func (client Client) mergersFinishTurn(c *gin.Context, g *Game) (*stats.Stats, c
 	return s, nil, nil
 }
 
-func (g *Game) validateMergersFinishTurn(c *gin.Context) (s *stats.Stats, err error) {
+func (g *Game) validateMergersFinishTurn(c *gin.Context) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if s, err = g.validateFinishTurn(c); g.Phase != Mergers {
-		err = sn.NewVError(`Expected "Mergers" phase but have %q phase.`, g.Phase)
+	s, err := g.validateFinishTurn(c)
+	switch {
+	case err != nil:
+		return nil, err
+	case g.Phase != Mergers:
+		return nil, sn.NewVError(`Expected "Mergers" phase but have %q phase.`, g.Phase)
+	case g.SubPhase == MSiapFajiCreation && g.SiapFajiMerger.GoodsToRemove() > 0:
+		return nil, sn.NewVError("you must remove %d more rice/spice", g.SiapFajiMerger.GoodsToRemove())
+	case g.SubPhase == MSiapFajiCreation && !g.SiapFajiMerger.Company().Zones.contiguous():
+		return nil, sn.NewVError("each zone must be contiguous after removal.")
+	default:
+		return s, nil
 	}
-	return
 }
 
 func (g *Game) acquisitionsNextPlayer(pers ...game.Playerer) (p *Player) {
