@@ -298,6 +298,7 @@ func (client Client) mergersFinishTurn(c *gin.Context, g *Game) (*stats.Stats, c
 
 	if g.SubPhase == MSiapFajiCreation {
 		announcer := g.PlayerByID(g.Merger.AnnouncerID)
+		g.SiapFajiMerger = nil
 		g.Merger = nil
 		g.setCurrentPlayers(announcer)
 		g.beginningOfPhaseReset()

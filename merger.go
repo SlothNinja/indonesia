@@ -735,10 +735,6 @@ func (g *Game) removeRiceSpice(c *gin.Context) (string, error) {
 		return "indonesia/remove_goods_update", nil
 	}
 
-	// Convert remaining goods to siap faji
-	// for _, a := range m.Company().Areas() {
-	// 	a.Producer.Goods = SiapFaji
-	// }
 	m.Company().toSiapFaji()
 
 	// Merge zones
@@ -747,7 +743,6 @@ func (g *Game) removeRiceSpice(c *gin.Context) (string, error) {
 	}
 
 	// Reset game state for next merger round.
-	g.SiapFajiMerger = nil
 	cp.PerformedAction = true
 	return "indonesia/remove_goods_update", nil
 }
