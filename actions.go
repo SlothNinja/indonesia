@@ -4,30 +4,33 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/sn"
 	"github.com/SlothNinja/user"
-	"github.com/gin-gonic/gin"
 )
 
-func (g *Game) validatePlayerAction(c *gin.Context) (err error) {
+func (g *Game) validatePlayerAction(cu *user.User) error {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	switch cp := g.CurrentPlayer(); {
+	cp := g.CurrentPlayer()
+	switch {
 	case cp.PerformedAction:
-		err = sn.NewVError("You have already performed an action.")
-	case !g.CUserIsCPlayerOrAdmin(c):
-		err = sn.NewVError("Only the current player can perform an action.")
+		return sn.NewVError("You have already performed an action.")
+	case !g.IsCurrentPlayer(cu):
+		return sn.NewVError("Only the current player can perform an action.")
+	default:
+		return nil
 	}
-	return
 }
 
-func (g *Game) validateAdminAction(c *gin.Context) (err error) {
+func (g *Game) validateAdminAction(cu *user.User) error {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if !user.IsAdmin(c) {
-		err = sn.NewVError("Only an admin can perform the selected action.")
+	switch {
+	case cu == nil, !cu.Admin:
+		return sn.NewVError("Only an admin can perform the selected action.")
+	default:
+		return nil
 	}
-	return
 }
 
 //type MultiActionID int

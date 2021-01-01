@@ -9,6 +9,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	stats "github.com/SlothNinja/user-stats"
 	"github.com/gin-gonic/gin"
 )
@@ -21,7 +22,14 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 		g := gameFrom(c)
 		oldCP := g.CurrentPlayer()
 
-		s, cs, err := client.finishTurn(c, g)
+		cu, err := client.User.Current(c)
+		if err != nil {
+			log.Errorf(err.Error())
+			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			return
+		}
+
+		s, cs, err := client.finishTurn(c, g, cu)
 		if err != nil {
 			log.Errorf(err.Error())
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
@@ -33,7 +41,7 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 			g.Phase = GameOver
 			g.Status = game.Completed
 			ks, es := wrap(s.GetUpdate(c, g.UpdatedAt), cs)
-			err = client.saveWith(c, g, ks, es)
+			err = client.saveWith(c, g, cu, ks, es)
 			if err != nil {
 				log.Errorf(err.Error())
 				c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
@@ -48,7 +56,7 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 		}
 
 		s = s.GetUpdate(c, g.UpdatedAt)
-		err = client.saveWith(c, g, []*datastore.Key{s.Key}, []interface{}{s})
+		err = client.saveWith(c, g, cu, []*datastore.Key{s.Key}, []interface{}{s})
 		if err != nil {
 			log.Errorf(err.Error())
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
@@ -67,33 +75,33 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 	}
 }
 
-func (client Client) finishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.Contests, error) {
+func (client Client) finishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	switch {
 	case g.Phase == NewEra:
-		return client.newEraFinishTurn(c, g)
+		return client.newEraFinishTurn(c, g, cu)
 	case g.Phase == BidForTurnOrder:
-		return client.bidForTurnOrderFinishTurn(c, g)
+		return client.bidForTurnOrderFinishTurn(c, g, cu)
 	case g.Phase == Mergers && g.SubPhase == MBid:
-		return client.mergersBidFinishTurn(c, g)
+		return client.mergersBidFinishTurn(c, g, cu)
 	case g.Phase == Mergers:
-		return client.mergersFinishTurn(c, g)
+		return client.mergersFinishTurn(c, g, cu)
 	case g.Phase == Acquisitions:
-		return client.acquisitionsFinishTurn(c, g)
+		return client.acquisitionsFinishTurn(c, g, cu)
 	case g.Phase == Research:
-		return client.researchFinishTurn(c, g)
+		return client.researchFinishTurn(c, g, cu)
 	case g.Phase == Operations:
-		return client.companyExpansionFinishTurn(c, g)
+		return client.companyExpansionFinishTurn(c, g, cu)
 	case g.Phase == CityGrowth:
-		return client.cityGrowthFinishTurn(c, g)
+		return client.cityGrowthFinishTurn(c, g, cu)
 	default:
 		return nil, nil, sn.NewVError("Improper Phase for finishing turn.")
 	}
 }
 
-func (g *Game) validateFinishTurn(c *gin.Context) (*stats.Stats, error) {
+func (g *Game) validateFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -102,7 +110,7 @@ func (g *Game) validateFinishTurn(c *gin.Context) (*stats.Stats, error) {
 	switch {
 	case s == nil:
 		return nil, sn.NewVError("missing stats for player.")
-	case !g.CUserIsCPlayerOrAdmin(c):
+	case !g.IsCurrentPlayer(cu):
 		return nil, sn.NewVError("only the current player may finish a turn.")
 	case !cp.PerformedAction:
 		return nil, sn.NewVError("%s has yet to perform an action.", g.NameFor(cp))
@@ -113,7 +121,7 @@ func (g *Game) validateFinishTurn(c *gin.Context) (*stats.Stats, error) {
 
 // ps is an optional parameter.
 // If no player is provided, assume current player.
-func (g *Game) nextPlayer(ps ...game.Playerer) *Player {
+func (g *Game) nextPlayer(cu *user.User, ps ...game.Playerer) *Player {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -124,18 +132,18 @@ func (g *Game) nextPlayer(ps ...game.Playerer) *Player {
 	return nil
 }
 
-func (g *Game) newEraNextPlayer() *Player {
+func (g *Game) newEraNextPlayer(cu *user.User) *Player {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	g.CurrentPlayer().endOfTurnUpdate()
-	p := g.nextPlayer()
+	p := g.nextPlayer(cu)
 	for g.Players().anyCanPlaceCity() {
 		if p.CanPlaceCity() {
 			p.beginningOfTurnReset()
 			return p
 		}
-		p = g.nextPlayer(p)
+		p = g.nextPlayer(cu, p)
 	}
 	return nil
 }
@@ -153,18 +161,18 @@ func (g *Game) removeUnplayableCityCardsFor(c *gin.Context, p *Player) {
 	p.CityCards = newCityCards
 }
 
-func (client Client) newEraFinishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.Contests, error) {
+func (client Client) newEraFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateNewEraFinishTurn(c)
+	s, err := g.validateNewEraFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(g.CurrentPlayer()))
 
-	np := g.newEraNextPlayer()
+	np := g.newEraNextPlayer(cu)
 	if np == nil {
 		for _, p := range g.Players() {
 			g.removeUnplayableCityCardsFor(c, p)
@@ -175,11 +183,11 @@ func (client Client) newEraFinishTurn(c *gin.Context, g *Game) (*stats.Stats, co
 	return s, nil, nil
 }
 
-func (g *Game) validateNewEraFinishTurn(c *gin.Context) (*stats.Stats, error) {
+func (g *Game) validateNewEraFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateFinishTurn(c)
+	s, err := g.validateFinishTurn(c, cu)
 	if err != nil {
 		return nil, err
 	}
@@ -190,12 +198,12 @@ func (g *Game) validateNewEraFinishTurn(c *gin.Context) (*stats.Stats, error) {
 	return s, nil
 }
 
-func (g *Game) bidForTurnOrderNextPlayer(pers ...game.Playerer) *Player {
+func (g *Game) bidForTurnOrderNextPlayer(cu *user.User, pers ...game.Playerer) *Player {
 	g.CurrentPlayer().endOfTurnUpdate()
-	p := g.nextPlayer(pers...)
+	p := g.nextPlayer(cu, pers...)
 	for !p.Equal(g.Players()[0]) {
 		if !p.CanBid() {
-			p = g.nextPlayer(p)
+			p = g.nextPlayer(cu, p)
 		} else {
 			return p
 		}
@@ -203,40 +211,40 @@ func (g *Game) bidForTurnOrderNextPlayer(pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (client Client) bidForTurnOrderFinishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.Contests, error) {
+func (client Client) bidForTurnOrderFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateBidForTurnOrderFinishTurn(c)
+	s, err := g.validateBidForTurnOrderFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(g.CurrentPlayer()))
 
-	np := g.bidForTurnOrderNextPlayer()
+	np := g.bidForTurnOrderNextPlayer(cu)
 	if np == nil {
-		g.setTurnOrder(c)
+		g.setTurnOrder(c, cu)
 		return s, nil, nil
 	}
 	g.setCurrentPlayers(np)
 	return s, nil, nil
 }
 
-func (g *Game) validateBidForTurnOrderFinishTurn(c *gin.Context) (s *stats.Stats, err error) {
-	if s, err = g.validateFinishTurn(c); g.Phase != BidForTurnOrder {
+func (g *Game) validateBidForTurnOrderFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
+	if s, err = g.validateFinishTurn(c, cu); g.Phase != BidForTurnOrder {
 		err = sn.NewVError(`Expected "Bid For Turn Order" phase but have %q phase.`, g.Phase)
 	}
 	return
 }
 
-func (g *Game) mergersBidNextPlayer(pers ...game.Playerer) *Player {
+func (g *Game) mergersBidNextPlayer(cu *user.User, pers ...game.Playerer) *Player {
 	g.CurrentPlayer().endOfTurnUpdate()
-	p := g.nextPlayer(pers...)
+	p := g.nextPlayer(cu, pers...)
 	for !g.Players().allPassed() {
 		if !p.CanBidOnMerger() {
 			g.autoPass(p)
-			p = g.nextPlayer(p)
+			p = g.nextPlayer(cu, p)
 		} else {
 			return p
 		}
@@ -244,40 +252,40 @@ func (g *Game) mergersBidNextPlayer(pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (client Client) mergersBidFinishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.Contests, error) {
+func (client Client) mergersBidFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateMergersBidFinishTurn(c)
+	s, err := g.validateMergersBidFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(g.CurrentPlayer()))
 
-	np := g.mergersBidNextPlayer()
+	np := g.mergersBidNextPlayer(cu)
 	if np == nil {
-		g.startMergerResolution(c)
+		g.startMergerResolution(c, cu)
 		return s, nil, nil
 	}
 	g.setCurrentPlayers(np)
 	return s, nil, nil
 }
 
-func (g *Game) validateMergersBidFinishTurn(c *gin.Context) (s *stats.Stats, err error) {
-	if s, err = g.validateFinishTurn(c); g.Phase != Mergers {
+func (g *Game) validateMergersBidFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
+	if s, err = g.validateFinishTurn(c, cu); g.Phase != Mergers {
 		err = sn.NewVError(`Expected "Mergers" phase but have %q phase.`, g.Phase)
 	}
 	return
 }
 
-func (g *Game) mergersNextPlayer(pers ...game.Playerer) *Player {
+func (g *Game) mergersNextPlayer(cu *user.User, pers ...game.Playerer) *Player {
 	g.CurrentPlayer().endOfTurnUpdate()
-	p := g.nextPlayer(pers...)
+	p := g.nextPlayer(cu, pers...)
 	for !g.Players().allPassed() {
 		if !p.CanAnnounceMerger() {
 			g.autoPass(p)
-			p = g.nextPlayer(p)
+			p = g.nextPlayer(cu, p)
 		} else {
 			return p
 		}
@@ -285,11 +293,11 @@ func (g *Game) mergersNextPlayer(pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (client Client) mergersFinishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.Contests, error) {
+func (client Client) mergersFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateMergersFinishTurn(c)
+	s, err := g.validateMergersFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -303,29 +311,29 @@ func (client Client) mergersFinishTurn(c *gin.Context, g *Game) (*stats.Stats, c
 		g.setCurrentPlayers(announcer)
 		g.beginningOfPhaseReset()
 		g.SubPhase = MSelectCompany1
-		np := g.mergersNextPlayer()
+		np := g.mergersNextPlayer(cu)
 		if np != nil {
 			g.setCurrentPlayers(np)
 			return s, nil, nil
 		}
-		g.startAcquisitions(c)
+		g.startAcquisitions(c, cu)
 		return s, nil, nil
 	}
 
-	np := g.mergersNextPlayer()
+	np := g.mergersNextPlayer(cu)
 	if np == nil {
-		g.startAcquisitions(c)
+		g.startAcquisitions(c, cu)
 		return s, nil, nil
 	}
 	g.setCurrentPlayers(np)
 	return s, nil, nil
 }
 
-func (g *Game) validateMergersFinishTurn(c *gin.Context) (*stats.Stats, error) {
+func (g *Game) validateMergersFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateFinishTurn(c)
+	s, err := g.validateFinishTurn(c, cu)
 	switch {
 	case err != nil:
 		return nil, err
@@ -340,13 +348,13 @@ func (g *Game) validateMergersFinishTurn(c *gin.Context) (*stats.Stats, error) {
 	}
 }
 
-func (g *Game) acquisitionsNextPlayer(pers ...game.Playerer) (p *Player) {
+func (g *Game) acquisitionsNextPlayer(cu *user.User, pers ...game.Playerer) (p *Player) {
 	g.CurrentPlayer().endOfTurnUpdate()
-	p = g.nextPlayer(pers...)
+	p = g.nextPlayer(cu, pers...)
 	for !g.Players().allPassed() {
 		if !p.CanAcquireCompany() {
 			g.autoPass(p)
-			p = g.nextPlayer(p)
+			p = g.nextPlayer(cu, p)
 		} else {
 			return
 		}
@@ -355,18 +363,18 @@ func (g *Game) acquisitionsNextPlayer(pers ...game.Playerer) (p *Player) {
 	return
 }
 
-func (client Client) acquisitionsFinishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.Contests, error) {
+func (client Client) acquisitionsFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateAcquisitionsFinishTurn(c)
+	s, err := g.validateAcquisitionsFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(g.CurrentPlayer()))
 
-	np := g.acquisitionsNextPlayer()
+	np := g.acquisitionsNextPlayer(cu)
 	if np == nil {
 		g.startResearch(c)
 		return s, nil, nil
@@ -375,11 +383,11 @@ func (client Client) acquisitionsFinishTurn(c *gin.Context, g *Game) (*stats.Sta
 	return s, nil, nil
 }
 
-func (g *Game) validateAcquisitionsFinishTurn(c *gin.Context) (*stats.Stats, error) {
+func (g *Game) validateAcquisitionsFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateFinishTurn(c)
+	s, err := g.validateFinishTurn(c, cu)
 	if err != nil {
 		return nil, err
 	}
@@ -389,13 +397,13 @@ func (g *Game) validateAcquisitionsFinishTurn(c *gin.Context) (*stats.Stats, err
 	return s, nil
 }
 
-func (g *Game) researchNextPlayer(pers ...game.Playerer) *Player {
+func (g *Game) researchNextPlayer(cu *user.User, pers ...game.Playerer) *Player {
 	g.CurrentPlayer().endOfTurnUpdate()
-	p := g.nextPlayer(pers...)
+	p := g.nextPlayer(cu, pers...)
 	for !p.Equal(g.Players()[0]) {
 		if !p.CanResearch() {
 			g.autoPass(p)
-			p = g.nextPlayer(p)
+			p = g.nextPlayer(cu, p)
 		} else {
 			return p
 		}
@@ -403,20 +411,20 @@ func (g *Game) researchNextPlayer(pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (client Client) researchFinishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.Contests, error) {
+func (client Client) researchFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateResearchFinishTurn(c)
+	s, err := g.validateResearchFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(g.CurrentPlayer()))
 
-	np := g.researchNextPlayer()
+	np := g.researchNextPlayer(cu)
 	if np == nil {
-		cs, err := client.startOperations(c, g)
+		cs, err := client.startOperations(c, g, cu)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -426,24 +434,24 @@ func (client Client) researchFinishTurn(c *gin.Context, g *Game) (*stats.Stats, 
 	return s, nil, nil
 }
 
-func (g *Game) validateResearchFinishTurn(c *gin.Context) (s *stats.Stats, err error) {
+func (g *Game) validateResearchFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if s, err = g.validateFinishTurn(c); g.Phase != Research {
+	if s, err = g.validateFinishTurn(c, cu); g.Phase != Research {
 		err = sn.NewVError(`Expected "Research" phase but have %q phase.`, g.Phase)
 	}
 	return
 }
 
-func (g *Game) companyExpansionNextPlayer(pers ...game.Playerer) *Player {
+func (g *Game) companyExpansionNextPlayer(cu *user.User, pers ...game.Playerer) *Player {
 	g.CurrentPlayer().endOfTurnUpdate()
-	p := g.nextPlayer(pers...)
+	p := g.nextPlayer(cu, pers...)
 	g.OverrideDeliveries = -1
 	for !g.AllCompaniesOperated() {
 		if !p.HasCompanyToOperate() {
 			g.autoPass(p)
-			p = g.nextPlayer(p)
+			p = g.nextPlayer(cu, p)
 		} else {
 			return p
 		}
@@ -451,18 +459,18 @@ func (g *Game) companyExpansionNextPlayer(pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (client Client) companyExpansionFinishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.Contests, error) {
+func (client Client) companyExpansionFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateCompanyExpansionFinishTurn(c)
+	s, err := g.validateCompanyExpansionFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(g.CurrentPlayer()))
 
-	np := g.companyExpansionNextPlayer()
+	np := g.companyExpansionNextPlayer(cu)
 	if np == nil {
 		cs, err := client.startCityGrowth(c, g)
 		if err != nil {
@@ -479,12 +487,12 @@ func (client Client) companyExpansionFinishTurn(c *gin.Context, g *Game) (*stats
 	return s, nil, nil
 }
 
-func (g *Game) validateCompanyExpansionFinishTurn(c *gin.Context) (*stats.Stats, error) {
+func (g *Game) validateCompanyExpansionFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	com := g.SelectedCompany()
-	s, err := g.validateFinishTurn(c)
+	s, err := g.validateFinishTurn(c, cu)
 	switch {
 	case err != nil:
 		return nil, err
@@ -501,11 +509,11 @@ func (g *Game) validateCompanyExpansionFinishTurn(c *gin.Context) (*stats.Stats,
 	}
 }
 
-func (client Client) cityGrowthFinishTurn(c *gin.Context, g *Game) (*stats.Stats, contest.Contests, error) {
+func (client Client) cityGrowthFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateCityGrowthFinishTurn(c)
+	s, err := g.validateCityGrowthFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -518,9 +526,9 @@ func (client Client) cityGrowthFinishTurn(c *gin.Context, g *Game) (*stats.Stats
 	return s, cs, err
 }
 
-func (g *Game) validateCityGrowthFinishTurn(c *gin.Context) (s *stats.Stats, err error) {
+func (g *Game) validateCityGrowthFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
 	cmap := g.CityGrowthMap()
-	switch s, err = g.validateFinishTurn(c); {
+	switch s, err = g.validateFinishTurn(c, cu); {
 	case err != nil:
 	case g.Phase != CityGrowth:
 		err = sn.NewVError("Expected %q phase but have %q phase.", CityGrowth, g.PhaseName())

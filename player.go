@@ -225,14 +225,14 @@ func (p *Player) endOfTurnUpdate() {
 	p.newCityAreasForCurrentEra = nil
 }
 
-func (p *Player) CanClick(a *Area) bool {
+func (p *Player) CanClick(a *Area, cu *user.User) bool {
 	if p == nil {
 		return false
 	}
 
 	g := p.Game()
 	switch {
-	case !p.User().IsAdminOrCurrent(g.CTX()):
+	case cu == nil || !(cu.Admin || (p.IsCurrentPlayer() && p.IsCurrentUser(cu))):
 		return false
 	case g.Phase == NewEra:
 		return p.canClickNewEra(a)

@@ -10,6 +10,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,11 +29,11 @@ func (g *Game) startBidForTurnOrder(c *gin.Context) *Player {
 	return g.Players()[0]
 }
 
-func (g *Game) placeTurnOrderBid(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) placeTurnOrderBid(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateBid(c); err != nil {
+	if err = g.validateBid(c, cu); err != nil {
 		tmpl, act = "indonesia/flash_notice", game.None
 		return
 	}
@@ -49,11 +50,11 @@ func (g *Game) placeTurnOrderBid(c *gin.Context) (tmpl string, act game.ActionTy
 	return
 }
 
-func (g *Game) validateBid(c *gin.Context) (err error) {
+func (g *Game) validateBid(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	switch err = g.validatePlayerAction(c); {
+	switch err = g.validatePlayerAction(cu); {
 	case err != nil:
 	default:
 		cp := g.CurrentPlayer()
@@ -91,7 +92,7 @@ func (e *bidEntry) HTML(c *gin.Context) template.HTML {
 		g.NameByPID(e.PlayerID), e.Bid, e.BidMultiplier, e.Bid*e.BidMultiplier)
 }
 
-func (g *Game) setTurnOrder(c *gin.Context) {
+func (g *Game) setTurnOrder(c *gin.Context, cu *user.User) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -114,7 +115,7 @@ func (g *Game) setTurnOrder(c *gin.Context) {
 		b[pid] = p.TotalBid()
 	}
 	g.newTurnOrderEntry(com, n, b)
-	g.startMergers(c)
+	g.startMergers(c, cu)
 }
 
 type turnOrderEntry struct {

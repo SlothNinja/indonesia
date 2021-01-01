@@ -7,6 +7,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,7 +16,7 @@ func init() {
 	gob.Register(new(discardCityEntry))
 }
 
-func (g *Game) placeCity(c *gin.Context) (tmpl string, err error) {
+func (g *Game) placeCity(c *gin.Context, cu *user.User) (tmpl string, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -24,7 +25,7 @@ func (g *Game) placeCity(c *gin.Context) (tmpl string, err error) {
 		c0, c1 *CityCard
 	)
 
-	if a, c0, c1, err = g.validatePlaceCity(c); err != nil {
+	if a, c0, c1, err = g.validatePlaceCity(c, cu); err != nil {
 		tmpl = "indonesia/flash_notice"
 		return
 	}
@@ -75,7 +76,7 @@ func (p *Player) cardsFor(a *Area) (c0, c1 *CityCard) {
 	return
 }
 
-func (g *Game) validatePlaceCity(c *gin.Context) (a *Area, c0, c1 *CityCard, err error) {
+func (g *Game) validatePlaceCity(c *gin.Context, cu *user.User) (a *Area, c0, c1 *CityCard, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -83,7 +84,7 @@ func (g *Game) validatePlaceCity(c *gin.Context) (a *Area, c0, c1 *CityCard, err
 	cp := g.CurrentPlayer()
 	c0, c1 = cp.cardsFor(a)
 
-	switch err = g.validatePlayerAction(c); {
+	switch err = g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("You must select an area.")
@@ -119,13 +120,13 @@ func (e *placeCityEntry) HTML(c *gin.Context) (s template.HTML) {
 	return
 }
 
-func (g *Game) playCard(c *gin.Context) (tmpl string, err error) {
+func (g *Game) playCard(c *gin.Context, cu *user.User) (tmpl string, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	//	g.debugf("Play Card")
 	var index int
-	if index, err = g.validatePlayCard(c); err != nil {
+	if index, err = g.validatePlayCard(c, cu); err != nil {
 		tmpl = "indonesia/flash_notice"
 		return
 	}
@@ -155,12 +156,12 @@ func (g *Game) playCard(c *gin.Context) (tmpl string, err error) {
 	return
 }
 
-func (g *Game) validatePlayCard(c *gin.Context) (index int, err error) {
+func (g *Game) validatePlayCard(c *gin.Context, cu *user.User) (index int, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	index = g.SelectedCardIndex
-	if err = g.validatePlayerAction(c); g.SelectedCardIndex < 0 || g.SelectedCardIndex > 1 {
+	if err = g.validatePlayerAction(cu); g.SelectedCardIndex < 0 || g.SelectedCardIndex > 1 {
 		err = sn.NewVError("Recieved invalid card index.")
 	}
 	return

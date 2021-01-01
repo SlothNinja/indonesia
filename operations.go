@@ -9,6 +9,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -44,11 +45,11 @@ func (m ShipperIncomeMap) OwnShips(pid int) int {
 	return ships
 }
 
-func (client Client) startOperations(c *gin.Context, g *Game) (contest.Contests, error) {
+func (client Client) startOperations(c *gin.Context, g *Game, cu *user.User) (contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	np := g.companyExpansionNextPlayer()
+	np := g.companyExpansionNextPlayer(cu)
 	if np == nil {
 		return client.startCityGrowth(c, g)
 	}
@@ -69,11 +70,11 @@ func (g *Game) resetOpIncome() {
 	}
 }
 
-func (g *Game) selectCompany(c *gin.Context) (string, error) {
+func (g *Game) selectCompany(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.validateSelectCompany(c)
+	com, err := g.validateSelectCompany(c, cu)
 	switch {
 	case err != nil:
 		return "indonesia/flash_notice", err
@@ -110,11 +111,11 @@ func (g *Game) selectCompany(c *gin.Context) (string, error) {
 	}
 }
 
-func (g *Game) validateSelectCompany(c *gin.Context) (*Company, error) {
+func (g *Game) validateSelectCompany(c *gin.Context, cu *user.User) (*Company, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.SelectedCompany(), g.validatePlayerAction(c)
+	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	if err != nil {
 		return nil, err
 	}
@@ -148,12 +149,12 @@ func (e *selectCompanyEntry) HTML(c *gin.Context) template.HTML {
 	return restful.HTML("<div>%s selected the %s company to operate.</div>", name, company.String())
 }
 
-func (g *Game) selectGood(c *gin.Context) (tmpl string, err error) {
+func (g *Game) selectGood(c *gin.Context, cu *user.User) (tmpl string, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var a *Area
-	if a, err = g.validateSelectGood(c); err != nil {
+	if a, err = g.validateSelectGood(c, cu); err != nil {
 		tmpl = "indonesia/flash_notice"
 		return
 	}
@@ -192,11 +193,11 @@ func (fp flowMatrix) addFlow(source, target FlowID) flowMatrix {
 	return flowPath
 }
 
-func (g *Game) validateSelectGood(c *gin.Context) (*Area, error) {
+func (g *Game) validateSelectGood(c *gin.Context, cu *user.User) (*Area, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	err := g.validatePlayerAction(c)
+	err := g.validatePlayerAction(cu)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +222,7 @@ func (g *Game) validateSelectGood(c *gin.Context) (*Area, error) {
 
 const InvalidUsedShips = -1
 
-func (g *Game) selectShip(c *gin.Context) (tmpl string, err error) {
+func (g *Game) selectShip(c *gin.Context, cu *user.User) (tmpl string, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -231,7 +232,7 @@ func (g *Game) selectShip(c *gin.Context) (tmpl string, err error) {
 		incomeMap ShipperIncomeMap
 	)
 
-	if old, area, shipper, incomeMap, err = g.validateSelectShip(c); err != nil {
+	if old, area, shipper, incomeMap, err = g.validateSelectShip(c, cu); err != nil {
 		tmpl = "indonesia/flash_notice"
 		return
 	}
@@ -285,7 +286,7 @@ func (g *Game) selectShip(c *gin.Context) (tmpl string, err error) {
 	return
 }
 
-func (g *Game) validateSelectShip(c *gin.Context) (*Area, *Area, *Shipper, ShipperIncomeMap, error) {
+func (g *Game) validateSelectShip(c *gin.Context, cu *user.User) (*Area, *Area, *Shipper, ShipperIncomeMap, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -295,7 +296,7 @@ func (g *Game) validateSelectShip(c *gin.Context) (*Area, *Area, *Shipper, Shipp
 	old, area := g.SelectedArea(), g.SelectedArea2()
 	incomeMap := g.ShipperIncomeMap
 
-	err := g.validatePlayerAction(c)
+	err := g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, nil, nil, nil, err
@@ -322,39 +323,30 @@ func (g *Game) validateSelectShip(c *gin.Context) (*Area, *Area, *Shipper, Shipp
 	}
 }
 
-func (g *Game) selectCityOrShip(c *gin.Context) (tmpl string, err error) {
+func (g *Game) selectCityOrShip(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	switch area2 := g.SelectedArea2(); {
+	area2 := g.SelectedArea2()
+	switch {
 	case area2 == nil:
-		tmpl = "indonesia/flash_notice"
-		err = sn.NewVError("You must select an area having a city or boat.")
+		return "indonesia/flash_notice", sn.NewVError("You must select an area having a city or boat.")
 	case area2.IsLand():
-		tmpl, err = g.selectCity(c)
+		return g.selectCity(c, cu)
 	case area2.IsSea():
-		tmpl, err = g.selectShip(c)
+		return g.selectShip(c, cu)
 	default:
-		tmpl = "indonesia/flash_notice"
-		err = sn.NewVError("Unexpectant value for area received.")
+		return "indonesia/flash_notice", sn.NewVError("Unexpectant value for area received.")
 	}
-	return
 }
 
-func (g *Game) selectCity(c *gin.Context) (tmpl string, err error) {
+func (g *Game) selectCity(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	var (
-		city                     *City
-		company, shippingCompany *Company
-		from, to                 Province
-		used                     int
-	)
-
-	if city, company, from, to, shippingCompany, used, err = g.validateSelectCity(c); err != nil {
-		tmpl = "indonesia/flash_notice"
-		return
+	city, company, from, to, shippingCompany, used, err := g.validateSelectCity(c, cu)
+	if err != nil {
+		return "indonesia/flash_notice", err
 	}
 
 	city.Delivered[company.Goods()] += 1
@@ -374,13 +366,12 @@ func (g *Game) selectCity(c *gin.Context) (tmpl string, err error) {
 	e := g.newDeliveredGoodEntryFor(g.CurrentPlayer(), company.Goods(), from, to, shippingCompany.OwnerID, used)
 	restful.AddNoticef(c, string(e.HTML(c)))
 	if company.Delivered() == g.RequiredDeliveries {
-		tmpl, err = g.receiveIncome(c)
-	} else {
-		g.SubPhase = OPSelectProductionArea
-		g.resetShipper()
-		tmpl = "indonesia/select_city_update"
+		return g.receiveIncome(c, cu)
 	}
-	return
+
+	g.SubPhase = OPSelectProductionArea
+	g.resetShipper()
+	return "indonesia/select_city_update", nil
 }
 
 func (g *Game) resetShipper() {
@@ -388,7 +379,7 @@ func (g *Game) resetShipper() {
 }
 
 // func (g *Game) validateSelectCity(c *gin.Context) (city *City, c *Company, from Province, to Province, sc *Company, used int, err error) {
-func (g *Game) validateSelectCity(c *gin.Context) (*City, *Company, Province, Province, *Company, int, error) {
+func (g *Game) validateSelectCity(c *gin.Context, cu *user.User) (*City, *Company, Province, Province, *Company, int, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -397,7 +388,7 @@ func (g *Game) validateSelectCity(c *gin.Context) (*City, *Company, Province, Pr
 	a2 := g.SelectedArea2()
 	goodsArea := g.SelectedGoodsArea()
 
-	err := g.validatePlayerAction(c)
+	err := g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, nil, 0, 0, nil, 0, err
@@ -454,12 +445,12 @@ func (e *deliveredGoodEntry) HTML(c *gin.Context) template.HTML {
 	return restful.HTML("<div>%s delivered %s from the %s province to the city in the %s province using %d ships of %s.</div>", g.NameByPID(e.PlayerID), e.Goods, e.From, e.To, e.ShipsUsed, g.NameByPID(e.OtherPlayerID))
 }
 
-func (g *Game) receiveIncome(c *gin.Context) (string, error) {
+func (g *Game) receiveIncome(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	g.SubPhase = OPReceiveIncome
-	com, incomeMap, err := g.validateReceiveIncome(c)
+	com, incomeMap, err := g.validateReceiveIncome(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", err
 	}
@@ -486,13 +477,13 @@ func (g *Game) receiveIncome(c *gin.Context) (string, error) {
 }
 
 // func (g *Game) validateReceiveIncome(c *gin.Context) (c *Company, incomeMap ShipperIncomeMap, err error) {
-func (g *Game) validateReceiveIncome(c *gin.Context) (*Company, ShipperIncomeMap, error) {
+func (g *Game) validateReceiveIncome(c *gin.Context, cu *user.User) (*Company, ShipperIncomeMap, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	com := g.SelectedCompany()
 	incomeMap := g.ShipperIncomeMap
-	err := g.validatePlayerAction(c)
+	err := g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, nil, err
@@ -563,11 +554,11 @@ func (g *Game) startCompanyExpansion(c *gin.Context) (tmpl string) {
 }
 
 // func (g *Game) stopExpanding(c *gin.Context) (tmpl string, act game.ActionType, err error) {
-func (g *Game) stopExpanding(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) stopExpanding(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.validateStopExpanding(c)
+	com, err := g.validateStopExpanding(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", game.None, err
 	}
@@ -583,11 +574,11 @@ func (g *Game) stopExpanding(c *gin.Context) (string, game.ActionType, error) {
 }
 
 // func (g *Game) validateStopExpanding(c *gin.Context) (c *Company, err error) {
-func (g *Game) validateStopExpanding(c *gin.Context) (*Company, error) {
+func (g *Game) validateStopExpanding(c *gin.Context, cu *user.User) (*Company, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.SelectedCompany(), g.validatePlayerAction(c)
+	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, err
@@ -617,11 +608,11 @@ func (e *stopExpandingEntry) HTML(c *gin.Context) template.HTML {
 }
 
 // func (g *Game) expandProduction(c *gin.Context) (tmpl string, err error) {
-func (g *Game) expandProduction(c *gin.Context) (string, error) {
+func (g *Game) expandProduction(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	a, com, err := g.validateExpandProduction(c)
+	a, com, err := g.validateExpandProduction(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", err
 	}
@@ -655,12 +646,12 @@ func (p *Player) RemainingExpansions() int {
 }
 
 // func (g *Game) validateExpandProduction(c *gin.Context) (a *Area, c *Company, err error) {
-func (g *Game) validateExpandProduction(c *gin.Context) (*Area, *Company, error) {
+func (g *Game) validateExpandProduction(c *gin.Context, cu *user.User) (*Area, *Company, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	cp := g.CurrentPlayer()
-	a, com, err := g.SelectedArea(), g.SelectedCompany(), g.validatePlayerAction(c)
+	a, com, err := g.SelectedArea(), g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, nil, err
@@ -712,11 +703,11 @@ func (e *expandProductionEntry) HTML(c *gin.Context) (s template.HTML) {
 }
 
 // func (g *Game) expandShipping(c *gin.Context) (tmpl string, err error) {
-func (g *Game) expandShipping(c *gin.Context) (string, error) {
+func (g *Game) expandShipping(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	a, com, err := g.validateExpandShipping(c)
+	a, com, err := g.validateExpandShipping(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", err
 	}
@@ -737,7 +728,7 @@ func (g *Game) expandShipping(c *gin.Context) (string, error) {
 }
 
 // func (g *Game) validateExpandShipping(c *gin.Context) (a *Area, c *Company, err error) {
-func (g *Game) validateExpandShipping(c *gin.Context) (*Area, *Company, error) {
+func (g *Game) validateExpandShipping(c *gin.Context, cu *user.User) (*Area, *Company, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -746,7 +737,7 @@ func (g *Game) validateExpandShipping(c *gin.Context) (*Area, *Company, error) {
 	maxShips := com.MaxShips()
 	cp := g.CurrentPlayer()
 
-	err := g.validatePlayerAction(c)
+	err := g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, nil, err
@@ -805,11 +796,11 @@ func (p *Player) CanFreeExpansion() bool {
 }
 
 // func (g *Game) acceptProposedFlow(c *gin.Context) (tmpl string, act game.ActionType, err error) {
-func (g *Game) acceptProposedFlow(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) acceptProposedFlow(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.validateAcceptProposedFlow(c)
+	com, err := g.validateAcceptProposedFlow(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", game.None, err
 	}
@@ -829,7 +820,7 @@ func (g *Game) acceptProposedFlow(c *gin.Context) (string, game.ActionType, erro
 		}
 	}
 
-	tmpl, err := g.receiveIncome(c)
+	tmpl, err := g.receiveIncome(c, cu)
 	if err != nil {
 		return tmpl, game.None, err
 	}
@@ -837,11 +828,11 @@ func (g *Game) acceptProposedFlow(c *gin.Context) (string, game.ActionType, erro
 }
 
 // func (g *Game) validateAcceptProposedFlow(c *gin.Context) (c *Company, err error) {
-func (g *Game) validateAcceptProposedFlow(c *gin.Context) (*Company, error) {
+func (g *Game) validateAcceptProposedFlow(c *gin.Context, cu *user.User) (*Company, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.SelectedCompany(), g.validatePlayerAction(c)
+	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, err

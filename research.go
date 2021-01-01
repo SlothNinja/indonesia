@@ -9,6 +9,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -62,14 +63,14 @@ func (g *Game) startResearch(c *gin.Context) {
 	g.setCurrentPlayers(g.Players()[0])
 }
 
-func (g *Game) conductResearch(c *gin.Context) (tmpl string, err error) {
+func (g *Game) conductResearch(c *gin.Context, cu *user.User) (tmpl string, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var tech Technology
 
 	cp := g.CurrentPlayer()
-	switch tech, err = g.validateConductResearch(c); {
+	switch tech, err = g.validateConductResearch(cu); {
 	case err != nil:
 	case tech == HullTech:
 		g.SubPhase = RSelectPlayer
@@ -89,20 +90,21 @@ func (g *Game) conductResearch(c *gin.Context) (tmpl string, err error) {
 	return
 }
 
-func (g *Game) validateConductResearch(c *gin.Context) (tech Technology, err error) {
+func (g *Game) validateConductResearch(cu *user.User) (Technology, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	var cp *Player
-
-	switch cp, tech, err = g.CurrentPlayer(), g.SelectedTechnology, g.validatePlayerAction(c); {
+	cp, tech, err := g.CurrentPlayer(), g.SelectedTechnology, g.validatePlayerAction(cu)
+	switch {
 	case err != nil:
+		return NoTech, nil
 	case tech < BidMultiplierTech || tech > HullTech:
-		err = sn.NewVError("Received invalid for researched technology.")
+		return NoTech, sn.NewVError("Received invalid for researched technology.")
 	case tech != HullTech && cp.Technologies[tech] == 5:
-		err = sn.NewVError("Your %s is already at the maximum level.", tech)
+		return NoTech, sn.NewVError("Your %s is already at the maximum level.", tech)
+	default:
+		return tech, nil
 	}
-	return
 }
 
 type researchEntry struct {
@@ -140,13 +142,13 @@ func (e *researchEntry) HTML(c *gin.Context) (s template.HTML) {
 	}
 }
 
-func (g *Game) selectHullPlayer(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) selectHullPlayer(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var p *Player
 
-	if p, err = g.validateSelectHullPlayer(c); err != nil {
+	if p, err = g.validateSelectHullPlayer(c, cu); err != nil {
 		tmpl, act = "indonesia/flash_notice", game.None
 		return
 	}
@@ -167,20 +169,21 @@ func (g *Game) selectHullPlayer(c *gin.Context) (tmpl string, act game.ActionTyp
 	return
 }
 
-func (g *Game) validateSelectHullPlayer(c *gin.Context) (p *Player, err error) {
+func (g *Game) validateSelectHullPlayer(c *gin.Context, cu *user.User) (*Player, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if !g.CUserIsCPlayerOrAdmin(c) {
-		err = sn.NewVError("Only the current player can perform an action.")
-		return
+	if !g.IsCurrentPlayer(cu) {
+		return nil, sn.NewVError("Only the current player can perform an action.")
 	}
 
-	switch p = g.PlayerBySID(c.PostForm("id")); {
+	p := g.PlayerBySID(c.PostForm("id"))
+	switch {
 	case p == nil:
-		err = sn.NewVError("Received invalid player.")
+		return nil, sn.NewVError("Received invalid player.")
 	case p.Technologies[HullTech] == 5:
-		err = sn.NewVError("Hull size of %s is already 5.", g.NameFor(p))
+		return nil, sn.NewVError("Hull size of %s is already 5.", g.NameFor(p))
+	default:
+		return p, nil
 	}
-	return
 }

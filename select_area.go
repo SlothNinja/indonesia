@@ -7,14 +7,15 @@ import (
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
-func (g *Game) selectArea(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) selectArea(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	err := g.validateSelectArea(c)
+	err := g.validateSelectArea(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", game.None, err
 	}
@@ -32,49 +33,49 @@ func (g *Game) selectArea(c *gin.Context) (string, game.ActionType, error) {
 	default:
 		switch {
 		case cp.CanSelectCard():
-			tmpl, err := g.playCard(c)
+			tmpl, err := g.playCard(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanPlaceCity():
-			tmpl, err := g.placeCity(c)
+			tmpl, err := g.placeCity(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanAcquireCompany():
-			tmpl, err := g.acquireCompany(c)
+			tmpl, err := g.acquireCompany(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanResearch():
-			tmpl, err := g.conductResearch(c)
+			tmpl, err := g.conductResearch(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanSelectCompanyToOperate():
-			tmpl, err := g.selectCompany(c)
+			tmpl, err := g.selectCompany(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanSelectGood():
-			tmpl, err := g.selectGood(c)
+			tmpl, err := g.selectGood(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanSelectShip():
-			tmpl, err := g.selectShip(c)
+			tmpl, err := g.selectShip(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanSelectCityOrShip():
-			tmpl, err := g.selectCityOrShip(c)
+			tmpl, err := g.selectCityOrShip(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanExpandProduction():
-			tmpl, err := g.expandProduction(c)
+			tmpl, err := g.expandProduction(c, cu)
 			return tmpl, game.Cache, err
 		case cp.canExpandShipping():
-			tmpl, err := g.expandShipping(c)
+			tmpl, err := g.expandShipping(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanAnnounceMerger():
-			tmpl, err := g.selectCompany1(c)
+			tmpl, err := g.selectCompany1(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanAnnounceSecondCompany():
-			tmpl, err := g.selectCompany2(c)
+			tmpl, err := g.selectCompany2(c, cu)
 			return tmpl, game.Cache, err
 		case cp.canPlaceInitialProduct():
-			tmpl, err := g.placeInitialProduct(c)
+			tmpl, err := g.placeInitialProduct(c, cu)
 			return tmpl, game.Cache, err
 		case cp.canPlaceInitialShip():
-			tmpl, err := g.placeInitialShip(c)
+			tmpl, err := g.placeInitialShip(c, cu)
 			return tmpl, game.Cache, err
 		case cp.CanCreateSiapFaji():
-			tmpl, err := g.removeRiceSpice(c)
+			tmpl, err := g.removeRiceSpice(c, cu)
 			return tmpl, game.Cache, err
 		default:
 			return "indonesia/flash_notice", game.None, sn.NewVError("Can't find action for selection.")
@@ -82,83 +83,123 @@ func (g *Game) selectArea(c *gin.Context) (string, game.ActionType, error) {
 	}
 }
 
-func (g *Game) validateSelectArea(c *gin.Context) (err error) {
+func (g *Game) validateSelectArea(c *gin.Context, cu *user.User) error {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if !g.CUserIsCPlayerOrAdmin(c) {
-		err = sn.NewVError("Only the current player can perform an action.")
-		return
+	if !g.IsCurrentPlayer(cu) {
+		return sn.NewVError("Only the current player can perform an action.")
 	}
 
-	var i, id, slot int
 	areaID := c.PostForm("area")
 
-	switch splits := strings.Split(areaID, "-"); {
+	splits := strings.Split(areaID, "-")
+	switch {
 	case splits[0] == "admin" && splits[1] == "area":
 		g.AdminAction = "admin-area"
-		if id, err = strconv.Atoi(splits[2]); err == nil {
-			g.SelectedAreaID = AreaID(id)
+		id, err := strconv.Atoi(splits[2])
+		if err != nil {
+			return err
 		}
+		g.SelectedAreaID = AreaID(id)
+		return nil
 	case splits[0] == "admin" && splits[1] == "player":
 		g.AdminAction = "admin-player"
-		if id, err = strconv.Atoi(splits[2]); err == nil {
-			g.SelectedPlayerID = id
+		id, err := strconv.Atoi(splits[2])
+		if err != nil {
+			return err
 		}
+		g.SelectedPlayerID = id
+		return nil
 	case splits[0] == "admin" && splits[1] == "company":
 		g.AdminAction = "admin-company"
-		if id, err = strconv.Atoi(splits[2]); err == nil {
-			g.SelectedPlayerID = id
 
-			if slot, err = strconv.Atoi(splits[3]); err == nil {
-				g.SelectedSlot = slot
-			}
+		id, err := strconv.Atoi(splits[2])
+		if err != nil {
+			return err
 		}
+
+		slot, err := strconv.Atoi(splits[3])
+		if err != nil {
+			return err
+		}
+
+		g.SelectedPlayerID = id
+		g.SelectedSlot = slot
+		return nil
 	case splits[0] == "admin":
 		g.AdminAction = areaID
+		return nil
 	case splits[0] == "card":
-		if i, err = strconv.Atoi(splits[1]); err == nil {
-			g.SelectedCardIndex = i
+		i, err := strconv.Atoi(splits[1])
+		if err != nil {
+			return err
 		}
+		g.SelectedCardIndex = i
+		return nil
 	case splits[0] == "available":
-		if i, err = strconv.Atoi(splits[2]); err == nil {
-			g.SelectedDeedIndex = i
+		i, err := strconv.Atoi(splits[2])
+		if err != nil {
+			return err
 		}
+		g.SelectedDeedIndex = i
+		return nil
 	case splits[0] == "area":
-		if id, err = strconv.Atoi(splits[1]); err == nil {
-			g.SelectedAreaID = AreaID(id)
+		id, err := strconv.Atoi(splits[1])
+		if err != nil {
+			return err
 		}
+		g.SelectedAreaID = AreaID(id)
+		return nil
 	case splits[0] == "research":
-		if i, err = strconv.Atoi(splits[1]); err == nil {
-			g.SelectedTechnology = Technology(i)
+		i, err := strconv.Atoi(splits[1])
+		if err != nil {
+			return err
 		}
+		g.SelectedTechnology = Technology(i)
+		return nil
 	case splits[0] == "company":
-		if i, err = strconv.Atoi(splits[1]); err == nil {
-			g.SelectedSlot = i
-			g.setSelectedPlayer(g.CurrentPlayer())
+		i, err := strconv.Atoi(splits[1])
+		if err != nil {
+			return err
 		}
+		g.SelectedSlot = i
+		g.setSelectedPlayer(g.CurrentPlayer())
+		return nil
 	case splits[0] == "ship":
-		if i, err = strconv.Atoi(splits[1]); err == nil {
-			g.SelectedArea2ID = AreaID(i)
-
-			if i, err = strconv.Atoi(splits[2]); err == nil {
-				g.SelectedShipperIndex = i
-			}
+		i, err := strconv.Atoi(splits[1])
+		if err != nil {
+			return err
 		}
+
+		j, err := strconv.Atoi(splits[2])
+		if err != nil {
+			return err
+		}
+		g.SelectedArea2ID = AreaID(i)
+		g.SelectedShipperIndex = j
+		return nil
 	case splits[0] == "city":
-		if i, err = strconv.Atoi(splits[1]); err == nil {
-			g.SelectedArea2ID = AreaID(i)
+		i, err := strconv.Atoi(splits[1])
+		if err != nil {
+			return err
 		}
+		g.SelectedArea2ID = AreaID(i)
+		return nil
 	case splits[0] == "player":
-		if id, err = strconv.Atoi(splits[1]); err == nil {
-			g.SelectedPlayerID = id
-
-			if slot, err = strconv.Atoi(splits[3]); err == nil {
-				g.SelectedSlot = slot
-			}
+		id, err := strconv.Atoi(splits[1])
+		if err != nil {
+			return err
 		}
+
+		slot, err := strconv.Atoi(splits[3])
+		if err != nil {
+			return err
+		}
+		g.SelectedPlayerID = id
+		g.SelectedSlot = slot
+		return nil
 	default:
-		err = sn.NewVError("Unable to determine selection.")
+		return sn.NewVError("Unable to determine selection.")
 	}
-	return
 }

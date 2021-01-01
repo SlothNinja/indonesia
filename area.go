@@ -10,6 +10,7 @@ import (
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -1236,8 +1237,8 @@ func (g *Game) freeShippingExpansionAreas() Areas {
 	return expansionAreas
 }
 
-func (g *Game) adminArea(c *gin.Context) (string, game.ActionType, error) {
-	err := g.validateAdminAction(c)
+func (g *Game) adminArea(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
+	err := g.validateAdminAction(cu)
 	if err != nil {
 		return "indonesia/flash_notice", game.None, err
 	}

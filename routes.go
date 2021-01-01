@@ -13,7 +13,8 @@ import (
 )
 
 type Client struct {
-	*datastore.Client
+	DS     *datastore.Client
+	User   user.Client
 	Stats  stats.Client
 	MLog   mlog.Client
 	Game   game.Client
@@ -21,12 +22,13 @@ type Client struct {
 	Cache  *cache.Cache
 }
 
-func NewClient(dsClient *datastore.Client, userClient *datastore.Client, mcache *cache.Cache) Client {
+func NewClient(dsClient *datastore.Client, userClient user.Client, mcache *cache.Cache) Client {
 	return Client{
-		Client: dsClient,
-		Stats:  stats.NewClient(dsClient),
-		MLog:   mlog.NewClient(dsClient),
-		Game:   game.NewClient(dsClient),
+		DS:     dsClient,
+		User:   userClient,
+		Stats:  stats.NewClient(userClient, dsClient),
+		MLog:   mlog.NewClient(userClient, dsClient),
+		Game:   game.NewClient(userClient, dsClient),
 		Rating: rating.NewClient(userClient, dsClient),
 		Cache:  mcache,
 	}
@@ -38,13 +40,11 @@ func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 
 	// New
 	g.GET("/new",
-		user.RequireCurrentUser(),
 		client.new(prefix),
 	)
 
 	// Create
 	g.POST("",
-		user.RequireCurrentUser(),
 		client.create(prefix),
 	)
 
@@ -65,36 +65,31 @@ func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 	// Finish
 	g.POST("/finish/:hid",
 		client.fetch,
-		client.Stats.Fetch(user.CurrentFrom),
+		client.Stats.Fetch,
 		client.finish(prefix),
 	)
 
 	// Drop
 	g.POST("/drop/:hid",
-		user.RequireCurrentUser(),
 		client.fetch,
 		client.drop(prefix),
 	)
 
 	// Accept
 	g.POST("/accept/:hid",
-		user.RequireCurrentUser(),
 		client.fetch,
 		client.accept(prefix),
 	)
 
 	// Update
 	g.PUT("/show/:hid",
-		user.RequireCurrentUser(),
 		client.fetch,
-		game.RequireCurrentPlayerOrAdmin(),
 		game.SetAdmin(false),
 		client.update(prefix),
 	)
 
 	// Add Message
 	g.PUT("/show/:hid/addmessage",
-		user.RequireCurrentUser(),
 		client.MLog.Get,
 		client.MLog.AddMessage(prefix),
 	)
@@ -114,7 +109,7 @@ func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 	)
 
 	// Admin group
-	admin := g.Group("/admin", user.RequireAdmin)
+	admin := g.Group("/admin")
 
 	// Admin
 	admin.GET("/:hid",

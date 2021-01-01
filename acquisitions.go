@@ -7,6 +7,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,13 +15,13 @@ func init() {
 	gob.Register(new(acquiredCompanyEntry))
 }
 
-func (g *Game) startAcquisitions(c *gin.Context) {
+func (g *Game) startAcquisitions(c *gin.Context, cu *user.User) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	g.Phase = Acquisitions
 	g.beginningOfPhaseReset()
-	if np := g.acquisitionsNextPlayer(g.Players()[g.NumPlayers-1]); np == nil {
+	if np := g.acquisitionsNextPlayer(cu, g.Players()[g.NumPlayers-1]); np == nil {
 		g.startResearch(c)
 	} else {
 		g.setCurrentPlayers(np)
@@ -39,7 +40,7 @@ func (g *Game) SelectedShippingCompany() *Company {
 	return g.ShippingCompanies()[g.SelectedShippingProvince]
 }
 
-func (g *Game) acquireCompany(c *gin.Context) (tmpl string, err error) {
+func (g *Game) acquireCompany(c *gin.Context, cu *user.User) (tmpl string, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -49,7 +50,7 @@ func (g *Game) acquireCompany(c *gin.Context) (tmpl string, err error) {
 		sIndex, dIndex int
 	)
 
-	if s, sIndex, d, dIndex, err = g.validateAcquireCompany(c); err != nil {
+	if s, sIndex, d, dIndex, err = g.validateAcquireCompany(c, cu); err != nil {
 		tmpl = "indonesia/flash_notice"
 		return
 	}
@@ -71,11 +72,11 @@ func (g *Game) acquireCompany(c *gin.Context) (tmpl string, err error) {
 	return
 }
 
-func (g *Game) validateAcquireCompany(c *gin.Context) (s *Slot, sIndex int, d *Deed, dIndex int, err error) {
+func (g *Game) validateAcquireCompany(c *gin.Context, cu *user.User) (s *Slot, sIndex int, d *Deed, dIndex int, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validatePlayerAction(c); err != nil {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 
@@ -92,11 +93,11 @@ func (g *Game) validateAcquireCompany(c *gin.Context) (s *Slot, sIndex int, d *D
 	return
 }
 
-func (g *Game) placeInitialProduct(c *gin.Context) (string, error) {
+func (g *Game) placeInitialProduct(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	a, com, err := g.validateplaceInitialProduct(c)
+	a, com, err := g.validateplaceInitialProduct(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", err
 	}
@@ -115,11 +116,11 @@ func (g *Game) placeInitialProduct(c *gin.Context) (string, error) {
 	return "indonesia/placed_product_update", nil
 }
 
-func (g *Game) validateplaceInitialProduct(c *gin.Context) (*Area, *Company, error) {
+func (g *Game) validateplaceInitialProduct(c *gin.Context, cu *user.User) (*Area, *Company, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	a, com, err := g.SelectedArea(), g.SelectedCompany(), g.validatePlayerAction(c)
+	a, com, err := g.SelectedArea(), g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, nil, err
@@ -163,11 +164,11 @@ func (e *acquiredCompanyEntry) HTML(c *gin.Context) template.HTML {
 		g.NameByPID(e.PlayerID), e.Deed.Goods, e.Deed.Province)
 }
 
-func (g *Game) placeInitialShip(c *gin.Context) (string, error) {
+func (g *Game) placeInitialShip(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	a, com, err := g.validateplaceInitialShip(c)
+	a, com, err := g.validateplaceInitialShip(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", err
 	}
@@ -185,11 +186,11 @@ func (g *Game) placeInitialShip(c *gin.Context) (string, error) {
 	return "indonesia/placed_product_update", nil
 }
 
-func (g *Game) validateplaceInitialShip(c *gin.Context) (*Area, *Company, error) {
+func (g *Game) validateplaceInitialShip(c *gin.Context, cu *user.User) (*Area, *Company, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	err := g.validatePlayerAction(c)
+	err := g.validatePlayerAction(cu)
 	if err != nil {
 		return nil, nil, err
 	}

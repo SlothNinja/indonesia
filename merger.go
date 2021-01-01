@@ -9,6 +9,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,7 +20,7 @@ func init() {
 	gob.Register(new(removeRiceSpiceEntry))
 }
 
-func (g *Game) startMergers(c *gin.Context) {
+func (g *Game) startMergers(c *gin.Context, cu *user.User) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -38,8 +39,8 @@ func (g *Game) startMergers(c *gin.Context) {
 	cp := g.CurrentPlayer()
 	if !cp.CanAnnounceMerger() {
 		g.autoPass(cp)
-		if np := g.mergersNextPlayer(); np == nil {
-			g.startAcquisitions(c)
+		if np := g.mergersNextPlayer(cu); np == nil {
+			g.startAcquisitions(c, cu)
 		} else {
 			g.setCurrentPlayers(np)
 			if g.SubPhase == MSiapFajiCreation {
@@ -50,11 +51,11 @@ func (g *Game) startMergers(c *gin.Context) {
 	}
 }
 
-func (g *Game) selectCompany1(c *gin.Context) (string, error) {
+func (g *Game) selectCompany1(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.validateSelectCompany1(c)
+	com, err := g.validateSelectCompany1(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", err
 	}
@@ -74,11 +75,11 @@ func (g *Game) selectCompany1(c *gin.Context) (string, error) {
 	return "indonesia/announce_merger1_update", nil
 }
 
-func (g *Game) validateSelectCompany1(c *gin.Context) (*Company, error) {
+func (g *Game) validateSelectCompany1(c *gin.Context, cu *user.User) (*Company, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.SelectedCompany(), g.validatePlayerAction(c)
+	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, err
@@ -138,11 +139,11 @@ func (e *announceMergerEntry) HTML(c *gin.Context) (s template.HTML) {
 	return
 }
 
-func (g *Game) selectCompany2(c *gin.Context) (string, error) {
+func (g *Game) selectCompany2(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.validateSelectCompany2(c)
+	com, err := g.validateSelectCompany2(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", err
 	}
@@ -154,11 +155,11 @@ func (g *Game) selectCompany2(c *gin.Context) (string, error) {
 	return "indonesia/announce_merger2_update", nil
 }
 
-func (g *Game) validateSelectCompany2(c *gin.Context) (*Company, error) {
+func (g *Game) validateSelectCompany2(c *gin.Context, cu *user.User) (*Company, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	com, err := g.SelectedCompany(), g.validatePlayerAction(c)
+	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, err
@@ -173,12 +174,12 @@ func (g *Game) validateSelectCompany2(c *gin.Context) (*Company, error) {
 	}
 }
 
-func (g *Game) mergerBid(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) mergerBid(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var bid int
-	if bid, err = g.validateMergerBid(c); err != nil {
+	if bid, err = g.validateMergerBid(c, cu); err != nil {
 		tmpl, act = "indonesia/flash_notice", game.None
 		return
 	}
@@ -201,12 +202,12 @@ func (p *Player) CanBidNone() bool {
 	return !(p.Game().Merger.AnnouncerID == p.ID() && p.Game().Merger.CurrentBid == 0)
 }
 
-func (g *Game) validateMergerBid(c *gin.Context) (bid int, err error) {
+func (g *Game) validateMergerBid(c *gin.Context, cu *user.User) (bid int, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	bid = NoBid
-	if err = g.validatePlayerAction(c); err != nil {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 
@@ -553,7 +554,7 @@ func (p *Player) owns(c *Company) bool {
 	return p.ID() == c.OwnerID
 }
 
-func (g *Game) startMergerResolution(c *gin.Context) {
+func (g *Game) startMergerResolution(c *gin.Context, cu *user.User) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -579,10 +580,10 @@ func (g *Game) startMergerResolution(c *gin.Context) {
 	g.setCurrentPlayers(announcer)
 	g.beginningOfPhaseReset()
 	g.SubPhase = MSelectCompany1
-	if np := g.mergersNextPlayer(); np != nil {
+	if np := g.mergersNextPlayer(cu); np != nil {
 		g.setCurrentPlayers(np)
 	} else {
-		g.startAcquisitions(c)
+		g.startAcquisitions(c, cu)
 	}
 }
 
@@ -712,11 +713,11 @@ func (m *SiapFajiMerger) removeAreasAdjacentCompetitor() {
 	}
 }
 
-func (g *Game) removeRiceSpice(c *gin.Context) (string, error) {
+func (g *Game) removeRiceSpice(c *gin.Context, cu *user.User) (string, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	m, a, err := g.validateRemoveRiceSpice(c)
+	m, a, err := g.validateRemoveRiceSpice(c, cu)
 	if err != nil {
 		return "indonesia/flash_notice", err
 	}
@@ -753,11 +754,11 @@ func (comp *Company) toSiapFaji() {
 	}
 }
 
-func (g *Game) validateRemoveRiceSpice(c *gin.Context) (*SiapFajiMerger, *Area, error) {
+func (g *Game) validateRemoveRiceSpice(c *gin.Context, cu *user.User) (*SiapFajiMerger, *Area, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	m, a, err := g.SiapFajiMerger, g.SelectedArea(), g.validatePlayerAction(c)
+	m, a, err := g.SiapFajiMerger, g.SelectedArea(), g.validatePlayerAction(cu)
 	switch {
 	case err != nil:
 		return nil, nil, err

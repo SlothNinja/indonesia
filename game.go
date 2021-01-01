@@ -11,6 +11,7 @@ import (
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
 	gtype "github.com/SlothNinja/type"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -305,48 +306,45 @@ func (g *Game) PlayerByIndex(index int) (player *Player) {
 	return
 }
 
-func (g *Game) undoAction(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) undoAction(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if tmpl, err = g.undoRedoReset(c, "%s undid action."); err == nil {
-		act = game.Undo
-	} else {
-		act = game.None
+	tmpl, err := g.undoRedoReset(c, cu, "%s undid action.")
+	if err != nil {
+		return tmpl, game.None, err
 	}
-	return
+	return tmpl, game.Undo, nil
 }
 
-func (g Game) redoAction(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g Game) redoAction(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if tmpl, err = g.undoRedoReset(c, "%s redid action."); err == nil {
-		act = game.Redo
-	} else {
-		act = game.None
+	tmpl, err := g.undoRedoReset(c, cu, "%s redid action.")
+	if err != nil {
+		return tmpl, game.None, err
 	}
-	return
+	return tmpl, game.Redo, nil
 }
 
-func (g *Game) resetTurn(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) resetTurn(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if tmpl, err = g.undoRedoReset(c, "%s reset turn."); err == nil {
-		act = game.Reset
-	} else {
-		act = game.None
+	tmpl, err := g.undoRedoReset(c, cu, "%s reset turn.")
+	if err != nil {
+		return tmpl, game.None, err
 	}
-	return
+	return tmpl, game.Reset, nil
 }
 
-func (g *Game) undoRedoReset(c *gin.Context, fmt string) (tmpl string, err error) {
+func (g *Game) undoRedoReset(c *gin.Context, cu *user.User, fmt string) (tmpl string, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	cp := g.CurrentPlayer()
-	if !g.CUserIsCPlayerOrAdmin(c) {
+	if !g.IsCurrentPlayer(cu) {
 		err = sn.NewVError("Only the current player may perform this action.")
 	}
 
@@ -354,14 +352,15 @@ func (g *Game) undoRedoReset(c *gin.Context, fmt string) (tmpl string, err error
 	return
 }
 
-func (g *Game) CurrentPlayer() (player *Player) {
-	if p := g.CurrentPlayerer(); p != nil {
-		player = p.(*Player)
+func (g *Game) CurrentPlayer() *Player {
+	p := g.CurrentPlayerer()
+	if p != nil {
+		return p.(*Player)
 	}
-	return
+	return nil
 }
 
-func (g *Game) adminHeader(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) adminHeader(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -412,7 +411,7 @@ func (g *Game) adminHeader(c *gin.Context) (string, game.ActionType, error) {
 	return "", game.Save, nil
 }
 
-func (g *Game) adminCities(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) adminCities(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 

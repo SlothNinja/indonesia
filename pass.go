@@ -8,6 +8,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,11 +17,11 @@ func init() {
 	gob.Register(new(autoPassEntry))
 }
 
-func (g *Game) pass(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) pass(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validatePass(c); err != nil {
+	if err = g.validatePass(c, cu); err != nil {
 		log.Errorf(err.Error())
 		tmpl, act = "indonesia/flash_notice", game.None
 		return
@@ -38,11 +39,11 @@ func (g *Game) pass(c *gin.Context) (tmpl string, act game.ActionType, err error
 	return
 }
 
-func (g *Game) validatePass(c *gin.Context) (err error) {
+func (g *Game) validatePass(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validatePlayerAction(c); err != nil {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 

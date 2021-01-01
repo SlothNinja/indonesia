@@ -10,6 +10,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -159,13 +160,13 @@ func (e *deliveredGoodsEntry) HTML(c *gin.Context) (s template.HTML) {
 	return s
 }
 
-func (g *Game) cityGrowth(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) cityGrowth(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var cs Cities
 
-	if cs, err = g.validateCityGrowth(c); err != nil {
+	if cs, err = g.validateCityGrowth(c, cu); err != nil {
 		tmpl, act = "indonesia/flash_notice", game.None
 		return
 	}
@@ -178,7 +179,7 @@ func (g *Game) cityGrowth(c *gin.Context) (tmpl string, act game.ActionType, err
 	return
 }
 
-func (g *Game) validateCityGrowth(c *gin.Context) (cs Cities, err error) {
+func (g *Game) validateCityGrowth(c *gin.Context, cu *user.User) (cs Cities, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
