@@ -232,7 +232,7 @@ func (p *Player) CanClick(a *Area, cu *user.User) bool {
 
 	g := p.Game()
 	switch {
-	case cu == nil || !(cu.Admin || (p.IsCurrentPlayer() && p.IsCurrentUser(cu))):
+	case cu == nil || !(cu.IsAdmin() || (p.IsCurrentPlayer() && p.IsCurrentUser(cu))):
 		return false
 	case g.Phase == NewEra:
 		return p.canClickNewEra(a)

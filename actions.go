@@ -26,7 +26,7 @@ func (g *Game) validateAdminAction(cu *user.User) error {
 	defer log.Debugf("Exiting")
 
 	switch {
-	case cu == nil, !cu.Admin:
+	case cu == nil, !cu.IsAdmin():
 		return sn.NewVError("Only an admin can perform the selected action.")
 	default:
 		return nil
