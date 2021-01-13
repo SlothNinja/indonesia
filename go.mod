@@ -7,7 +7,7 @@ require (
 	github.com/SlothNinja/codec v1.0.0
 	github.com/SlothNinja/color v1.0.0
 	github.com/SlothNinja/contest v1.0.0
-	github.com/SlothNinja/game v1.0.10
+	github.com/SlothNinja/game v1.0.11
 	github.com/SlothNinja/log v0.0.2
 	github.com/SlothNinja/mlog v1.0.2
 	github.com/SlothNinja/rating v1.0.5
