@@ -5,6 +5,7 @@ import (
 
 	"github.com/SlothNinja/color"
 	"github.com/SlothNinja/restful"
+	"github.com/SlothNinja/user"
 )
 
 type Shipper struct {
@@ -41,12 +42,20 @@ func (s *Shipper) init(g *Game, a *Area) {
 	s.a = a
 }
 
-func (s *Shipper) Color() color.Color {
-	if owner := s.Owner(); owner == nil {
+// func (s *Shipper) Color() color.Color {
+// 	if owner := s.Owner(); owner == nil {
+// 		return color.Black
+// 	} else {
+// 		return owner.Color()
+// 	}
+// }
+
+func (g *Game) ShipColor(s *Shipper, cu *user.User) color.Color {
+	owner := s.Owner()
+	if owner == nil {
 		return color.Black
-	} else {
-		return owner.Color()
 	}
+	return g.Color(owner, cu)
 }
 
 func (s *Shipper) equals(shipper *Shipper) bool {

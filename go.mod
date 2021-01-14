@@ -20,4 +20,10 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/mailjet/mailjet-apiv3-go v0.0.0-20201009050126-c24bc15a9394
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/stretchr/testify v1.7.0 // indirect
+	golang.org/x/oauth2 v0.0.0-20210113205817-d3ed898aa8a3 // indirect
+	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78 // indirect
+	golang.org/x/tools v0.0.0-20210113180300-f96436850f18 // indirect
+	google.golang.org/genproto v0.0.0-20210113195801-ae06605f4595 // indirect
+	google.golang.org/grpc v1.35.0 // indirect
 )

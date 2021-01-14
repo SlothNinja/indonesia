@@ -605,17 +605,30 @@ func (g *Game) landAreas() (as Areas) {
 	return
 }
 
-func (a *Area) GoodsColor() color.Color {
+// func (a *Area) GoodsColor() color.Color {
+// 	company := a.GoodsCompany()
+// 	if company == nil {
+// 		return color.Black
+// 	}
+// 	company.g = a.g
+// 	owner := company.Owner()
+// 	if owner == nil {
+// 		return color.Black
+// 	}
+// 	return owner.Color()
+// }
+
+func (g *Game) GoodsColor(a *Area, cu *user.User) color.Color {
 	company := a.GoodsCompany()
 	if company == nil {
 		return color.Black
 	}
-	company.g = a.g
+	company.g = g
 	owner := company.Owner()
 	if owner == nil {
 		return color.Black
 	}
-	return owner.Color()
+	return g.Color(owner, cu)
 }
 
 var landIDS = AreaIDS{Aceh0, Aceh1, Aceh2, Aceh3, SumateraUtara4, SumateraUtara5, SumateraUtara6, SumateraUtara7,
