@@ -16,8 +16,8 @@ func init() {
 }
 
 func (g *Game) startAcquisitions(c *gin.Context, cu *user.User) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = Acquisitions
 	g.beginningOfPhaseReset()
@@ -41,8 +41,8 @@ func (g *Game) SelectedShippingCompany() *Company {
 }
 
 func (g *Game) acquireCompany(c *gin.Context, cu *user.User) (tmpl string, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		s              *Slot
@@ -73,8 +73,8 @@ func (g *Game) acquireCompany(c *gin.Context, cu *user.User) (tmpl string, err e
 }
 
 func (g *Game) validateAcquireCompany(c *gin.Context, cu *user.User) (s *Slot, sIndex int, d *Deed, dIndex int, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validatePlayerAction(cu); err != nil {
 		return
@@ -94,8 +94,8 @@ func (g *Game) validateAcquireCompany(c *gin.Context, cu *user.User) (s *Slot, s
 }
 
 func (g *Game) placeInitialProduct(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a, com, err := g.validateplaceInitialProduct(c, cu)
 	if err != nil {
@@ -117,8 +117,8 @@ func (g *Game) placeInitialProduct(c *gin.Context, cu *user.User) (string, error
 }
 
 func (g *Game) validateplaceInitialProduct(c *gin.Context, cu *user.User) (*Area, *Company, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a, com, err := g.SelectedArea(), g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
@@ -165,8 +165,8 @@ func (e *acquiredCompanyEntry) HTML(c *gin.Context) template.HTML {
 }
 
 func (g *Game) placeInitialShip(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a, com, err := g.validateplaceInitialShip(c, cu)
 	if err != nil {
@@ -187,8 +187,8 @@ func (g *Game) placeInitialShip(c *gin.Context, cu *user.User) (string, error) {
 }
 
 func (g *Game) validateplaceInitialShip(c *gin.Context, cu *user.User) (*Area, *Company, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	err := g.validatePlayerAction(cu)
 	if err != nil {

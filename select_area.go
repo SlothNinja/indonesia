@@ -12,8 +12,8 @@ import (
 )
 
 func (g *Game) selectArea(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	err := g.validateSelectArea(c, cu)
 	if err != nil {
@@ -84,8 +84,8 @@ func (g *Game) selectArea(c *gin.Context, cu *user.User) (string, game.ActionTyp
 }
 
 func (g *Game) validateSelectArea(c *gin.Context, cu *user.User) error {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if !g.IsCurrentPlayer(cu) {
 		return sn.NewVError("Only the current player can perform an action.")

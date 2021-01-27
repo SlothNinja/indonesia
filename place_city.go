@@ -17,8 +17,8 @@ func init() {
 }
 
 func (g *Game) placeCity(c *gin.Context, cu *user.User) (tmpl string, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a      *Area
@@ -77,8 +77,8 @@ func (p *Player) cardsFor(a *Area) (c0, c1 *CityCard) {
 }
 
 func (g *Game) validatePlaceCity(c *gin.Context, cu *user.User) (a *Area, c0, c1 *CityCard, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a = g.SelectedArea()
 	cp := g.CurrentPlayer()
@@ -121,8 +121,8 @@ func (e *placeCityEntry) HTML(c *gin.Context) (s template.HTML) {
 }
 
 func (g *Game) playCard(c *gin.Context, cu *user.User) (tmpl string, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	//	g.debugf("Play Card")
 	var index int
@@ -157,8 +157,8 @@ func (g *Game) playCard(c *gin.Context, cu *user.User) (tmpl string, err error) 
 }
 
 func (g *Game) validatePlayCard(c *gin.Context, cu *user.User) (index int, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	index = g.SelectedCardIndex
 	if err = g.validatePlayerAction(cu); g.SelectedCardIndex < 0 || g.SelectedCardIndex > 1 {

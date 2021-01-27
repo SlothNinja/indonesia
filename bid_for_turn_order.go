@@ -22,16 +22,16 @@ func init() {
 const NoBid = -1
 
 func (g *Game) startBidForTurnOrder(c *gin.Context) *Player {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = BidForTurnOrder
 	return g.Players()[0]
 }
 
 func (g *Game) placeTurnOrderBid(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateBid(c, cu); err != nil {
 		tmpl, act = "indonesia/flash_notice", game.None
@@ -51,8 +51,8 @@ func (g *Game) placeTurnOrderBid(c *gin.Context, cu *user.User) (tmpl string, ac
 }
 
 func (g *Game) validateBid(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	switch err = g.validatePlayerAction(cu); {
 	case err != nil:
@@ -93,8 +93,8 @@ func (e *bidEntry) HTML(c *gin.Context) template.HTML {
 }
 
 func (g *Game) setTurnOrder(c *gin.Context, cu *user.User) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, n := make([]int, g.NumPlayers), make([]int, g.NumPlayers)
 	for i, p := range g.Players() {

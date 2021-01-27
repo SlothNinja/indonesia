@@ -10,28 +10,27 @@ import (
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
 	"github.com/SlothNinja/user"
-	stats "github.com/SlothNinja/user-stats"
 	"github.com/gin-gonic/gin"
 )
 
-func (client Client) finish(prefix string) gin.HandlerFunc {
+func (client *Client) finish(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Debugf("Entering")
-		defer log.Debugf("Exiting")
+		client.Log.Debugf(msgEnter)
+		defer client.Log.Debugf(msgExit)
 
 		g := gameFrom(c)
 		oldCP := g.CurrentPlayer()
 
 		cu, err := client.User.Current(c)
 		if err != nil {
-			log.Errorf(err.Error())
+			client.Log.Errorf(err.Error())
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
 
 		s, cs, err := client.finishTurn(c, g, cu)
 		if err != nil {
-			log.Errorf(err.Error())
+			client.Log.Errorf(err.Error())
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
@@ -43,13 +42,13 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 			ks, es := wrap(s.GetUpdate(c, g.UpdatedAt), cs)
 			err = client.saveWith(c, g, cu, ks, es)
 			if err != nil {
-				log.Errorf(err.Error())
+				client.Log.Errorf(err.Error())
 				c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 				return
 			}
 			err = g.SendEndGameNotifications(c)
 			if err != nil {
-				log.Warningf(err.Error())
+				client.Log.Warningf(err.Error())
 			}
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
@@ -58,7 +57,7 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 		s = s.GetUpdate(c, g.UpdatedAt)
 		err = client.saveWith(c, g, cu, []*datastore.Key{s.Key}, []interface{}{s})
 		if err != nil {
-			log.Errorf(err.Error())
+			client.Log.Errorf(err.Error())
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
@@ -67,7 +66,7 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 		if newCP != nil && oldCP.ID() != newCP.ID() {
 			err = g.SendTurnNotificationsTo(c, newCP)
 			if err != nil {
-				log.Warningf(err.Error())
+				client.Log.Warningf(err.Error())
 			}
 		}
 
@@ -75,9 +74,9 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 	}
 }
 
-func (client Client) finishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) finishTurn(c *gin.Context, g *Game, cu *user.User) (*user.Stats, []*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	switch {
 	case g.Phase == NewEra:
@@ -101,12 +100,12 @@ func (client Client) finishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.
 	}
 }
 
-func (g *Game) validateFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (g *Game) validateFinishTurn(c *gin.Context, cu *user.User) (*user.Stats, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	cp := g.CurrentPlayer()
-	s := stats.Fetched(c)
+	s := user.StatsFetched(c)
 	switch {
 	case s == nil:
 		return nil, sn.NewVError("missing stats for player.")
@@ -122,8 +121,8 @@ func (g *Game) validateFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, 
 // ps is an optional parameter.
 // If no player is provided, assume current player.
 func (g *Game) nextPlayer(cu *user.User, ps ...game.Playerer) *Player {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	nper := g.NextPlayerer(ps...)
 	if nper != nil {
@@ -133,8 +132,8 @@ func (g *Game) nextPlayer(cu *user.User, ps ...game.Playerer) *Player {
 }
 
 func (g *Game) newEraNextPlayer(cu *user.User) *Player {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.CurrentPlayer().endOfTurnUpdate()
 	p := g.nextPlayer(cu)
@@ -161,9 +160,9 @@ func (g *Game) removeUnplayableCityCardsFor(c *gin.Context, p *Player) {
 	p.CityCards = newCityCards
 }
 
-func (client Client) newEraFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) newEraFinishTurn(c *gin.Context, g *Game, cu *user.User) (*user.Stats, []*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	s, err := g.validateNewEraFinishTurn(c, cu)
 	if err != nil {
@@ -183,9 +182,9 @@ func (client Client) newEraFinishTurn(c *gin.Context, g *Game, cu *user.User) (*
 	return s, nil, nil
 }
 
-func (g *Game) validateNewEraFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (g *Game) validateNewEraFinishTurn(c *gin.Context, cu *user.User) (*user.Stats, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	s, err := g.validateFinishTurn(c, cu)
 	if err != nil {
@@ -211,9 +210,9 @@ func (g *Game) bidForTurnOrderNextPlayer(cu *user.User, pers ...game.Playerer) *
 	return nil
 }
 
-func (client Client) bidForTurnOrderFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) bidForTurnOrderFinishTurn(c *gin.Context, g *Game, cu *user.User) (*user.Stats, []*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	s, err := g.validateBidForTurnOrderFinishTurn(c, cu)
 	if err != nil {
@@ -231,7 +230,7 @@ func (client Client) bidForTurnOrderFinishTurn(c *gin.Context, g *Game, cu *user
 	return s, nil, nil
 }
 
-func (g *Game) validateBidForTurnOrderFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
+func (g *Game) validateBidForTurnOrderFinishTurn(c *gin.Context, cu *user.User) (s *user.Stats, err error) {
 	if s, err = g.validateFinishTurn(c, cu); g.Phase != BidForTurnOrder {
 		err = sn.NewVError(`Expected "Bid For Turn Order" phase but have %q phase.`, g.Phase)
 	}
@@ -252,9 +251,9 @@ func (g *Game) mergersBidNextPlayer(cu *user.User, pers ...game.Playerer) *Playe
 	return nil
 }
 
-func (client Client) mergersBidFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) mergersBidFinishTurn(c *gin.Context, g *Game, cu *user.User) (*user.Stats, []*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	s, err := g.validateMergersBidFinishTurn(c, cu)
 	if err != nil {
@@ -272,7 +271,7 @@ func (client Client) mergersBidFinishTurn(c *gin.Context, g *Game, cu *user.User
 	return s, nil, nil
 }
 
-func (g *Game) validateMergersBidFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
+func (g *Game) validateMergersBidFinishTurn(c *gin.Context, cu *user.User) (s *user.Stats, err error) {
 	if s, err = g.validateFinishTurn(c, cu); g.Phase != Mergers {
 		err = sn.NewVError(`Expected "Mergers" phase but have %q phase.`, g.Phase)
 	}
@@ -293,9 +292,9 @@ func (g *Game) mergersNextPlayer(cu *user.User, pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (client Client) mergersFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) mergersFinishTurn(c *gin.Context, g *Game, cu *user.User) (*user.Stats, []*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	s, err := g.validateMergersFinishTurn(c, cu)
 	if err != nil {
@@ -329,9 +328,9 @@ func (client Client) mergersFinishTurn(c *gin.Context, g *Game, cu *user.User) (
 	return s, nil, nil
 }
 
-func (g *Game) validateMergersFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (g *Game) validateMergersFinishTurn(c *gin.Context, cu *user.User) (*user.Stats, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	s, err := g.validateFinishTurn(c, cu)
 	switch {
@@ -363,9 +362,9 @@ func (g *Game) acquisitionsNextPlayer(cu *user.User, pers ...game.Playerer) (p *
 	return
 }
 
-func (client Client) acquisitionsFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) acquisitionsFinishTurn(c *gin.Context, g *Game, cu *user.User) (*user.Stats, []*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	s, err := g.validateAcquisitionsFinishTurn(c, cu)
 	if err != nil {
@@ -383,9 +382,9 @@ func (client Client) acquisitionsFinishTurn(c *gin.Context, g *Game, cu *user.Us
 	return s, nil, nil
 }
 
-func (g *Game) validateAcquisitionsFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (g *Game) validateAcquisitionsFinishTurn(c *gin.Context, cu *user.User) (*user.Stats, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	s, err := g.validateFinishTurn(c, cu)
 	if err != nil {
@@ -411,9 +410,9 @@ func (g *Game) researchNextPlayer(cu *user.User, pers ...game.Playerer) *Player 
 	return nil
 }
 
-func (client Client) researchFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) researchFinishTurn(c *gin.Context, g *Game, cu *user.User) (*user.Stats, []*contest.Contest, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	s, err := g.validateResearchFinishTurn(c, cu)
 	if err != nil {
@@ -434,9 +433,9 @@ func (client Client) researchFinishTurn(c *gin.Context, g *Game, cu *user.User) 
 	return s, nil, nil
 }
 
-func (g *Game) validateResearchFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (g *Game) validateResearchFinishTurn(c *gin.Context, cu *user.User) (s *user.Stats, err error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if s, err = g.validateFinishTurn(c, cu); g.Phase != Research {
 		err = sn.NewVError(`Expected "Research" phase but have %q phase.`, g.Phase)
@@ -459,9 +458,9 @@ func (g *Game) companyExpansionNextPlayer(cu *user.User, pers ...game.Playerer) 
 	return nil
 }
 
-func (client Client) companyExpansionFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) companyExpansionFinishTurn(c *gin.Context, g *Game, cu *user.User) (*user.Stats, []*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	s, err := g.validateCompanyExpansionFinishTurn(c, cu)
 	if err != nil {
@@ -487,9 +486,9 @@ func (client Client) companyExpansionFinishTurn(c *gin.Context, g *Game, cu *use
 	return s, nil, nil
 }
 
-func (g *Game) validateCompanyExpansionFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (g *Game) validateCompanyExpansionFinishTurn(c *gin.Context, cu *user.User) (*user.Stats, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com := g.SelectedCompany()
 	s, err := g.validateFinishTurn(c, cu)
@@ -509,9 +508,9 @@ func (g *Game) validateCompanyExpansionFinishTurn(c *gin.Context, cu *user.User)
 	}
 }
 
-func (client Client) cityGrowthFinishTurn(c *gin.Context, g *Game, cu *user.User) (*stats.Stats, contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) cityGrowthFinishTurn(c *gin.Context, g *Game, cu *user.User) (*user.Stats, []*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	s, err := g.validateCityGrowthFinishTurn(c, cu)
 	if err != nil {
@@ -526,7 +525,7 @@ func (client Client) cityGrowthFinishTurn(c *gin.Context, g *Game, cu *user.User
 	return s, cs, err
 }
 
-func (g *Game) validateCityGrowthFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
+func (g *Game) validateCityGrowthFinishTurn(c *gin.Context, cu *user.User) (s *user.Stats, err error) {
 	cmap := g.CityGrowthMap()
 	switch s, err = g.validateFinishTurn(c, cu); {
 	case err != nil:

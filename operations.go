@@ -45,9 +45,9 @@ func (m ShipperIncomeMap) OwnShips(pid int) int {
 	return ships
 }
 
-func (client Client) startOperations(c *gin.Context, g *Game, cu *user.User) (contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) startOperations(c *gin.Context, g *Game, cu *user.User) ([]*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	np := g.companyExpansionNextPlayer(cu)
 	if np == nil {
@@ -71,8 +71,8 @@ func (g *Game) resetOpIncome() {
 }
 
 func (g *Game) selectCompany(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.validateSelectCompany(c, cu)
 	switch {
@@ -112,8 +112,8 @@ func (g *Game) selectCompany(c *gin.Context, cu *user.User) (string, error) {
 }
 
 func (g *Game) validateSelectCompany(c *gin.Context, cu *user.User) (*Company, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	if err != nil {
@@ -150,8 +150,8 @@ func (e *selectCompanyEntry) HTML(c *gin.Context) template.HTML {
 }
 
 func (g *Game) selectGood(c *gin.Context, cu *user.User) (tmpl string, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var a *Area
 	if a, err = g.validateSelectGood(c, cu); err != nil {
@@ -194,8 +194,8 @@ func (fp flowMatrix) addFlow(source, target FlowID) flowMatrix {
 }
 
 func (g *Game) validateSelectGood(c *gin.Context, cu *user.User) (*Area, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	err := g.validatePlayerAction(cu)
 	if err != nil {
@@ -223,8 +223,8 @@ func (g *Game) validateSelectGood(c *gin.Context, cu *user.User) (*Area, error) 
 const InvalidUsedShips = -1
 
 func (g *Game) selectShip(c *gin.Context, cu *user.User) (tmpl string, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		old, area *Area
@@ -287,8 +287,8 @@ func (g *Game) selectShip(c *gin.Context, cu *user.User) (tmpl string, err error
 }
 
 func (g *Game) validateSelectShip(c *gin.Context, cu *user.User) (*Area, *Area, *Shipper, ShipperIncomeMap, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com := g.SelectedCompany()
 	shipper := g.SelectedShipper()
@@ -324,8 +324,8 @@ func (g *Game) validateSelectShip(c *gin.Context, cu *user.User) (*Area, *Area, 
 }
 
 func (g *Game) selectCityOrShip(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	area2 := g.SelectedArea2()
 	switch {
@@ -341,8 +341,8 @@ func (g *Game) selectCityOrShip(c *gin.Context, cu *user.User) (string, error) {
 }
 
 func (g *Game) selectCity(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	city, company, from, to, shippingCompany, used, err := g.validateSelectCity(c, cu)
 	if err != nil {
@@ -380,8 +380,8 @@ func (g *Game) resetShipper() {
 
 // func (g *Game) validateSelectCity(c *gin.Context) (city *City, c *Company, from Province, to Province, sc *Company, used int, err error) {
 func (g *Game) validateSelectCity(c *gin.Context, cu *user.User) (*City, *Company, Province, Province, *Company, int, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, sc := g.SelectedCompany(), g.SelectedShippingCompany()
 	a := g.SelectedArea()
@@ -446,8 +446,8 @@ func (e *deliveredGoodEntry) HTML(c *gin.Context) template.HTML {
 }
 
 func (g *Game) receiveIncome(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.SubPhase = OPReceiveIncome
 	com, incomeMap, err := g.validateReceiveIncome(c, cu)
@@ -478,8 +478,8 @@ func (g *Game) receiveIncome(c *gin.Context, cu *user.User) (string, error) {
 
 // func (g *Game) validateReceiveIncome(c *gin.Context) (c *Company, incomeMap ShipperIncomeMap, err error) {
 func (g *Game) validateReceiveIncome(c *gin.Context, cu *user.User) (*Company, ShipperIncomeMap, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com := g.SelectedCompany()
 	incomeMap := g.ShipperIncomeMap
@@ -533,8 +533,8 @@ func (e *receiveIncomeEntry) HTML(c *gin.Context) (s template.HTML) {
 }
 
 func (g *Game) startCompanyExpansion(c *gin.Context) (tmpl string) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if company := g.SelectedCompany(); company.deliveredAllGoods() {
 		g.SubPhase = OPFreeExpansion
@@ -555,8 +555,8 @@ func (g *Game) startCompanyExpansion(c *gin.Context) (tmpl string) {
 
 // func (g *Game) stopExpanding(c *gin.Context) (tmpl string, act game.ActionType, err error) {
 func (g *Game) stopExpanding(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.validateStopExpanding(c, cu)
 	if err != nil {
@@ -575,8 +575,8 @@ func (g *Game) stopExpanding(c *gin.Context, cu *user.User) (string, game.Action
 
 // func (g *Game) validateStopExpanding(c *gin.Context) (c *Company, err error) {
 func (g *Game) validateStopExpanding(c *gin.Context, cu *user.User) (*Company, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
@@ -609,8 +609,8 @@ func (e *stopExpandingEntry) HTML(c *gin.Context) template.HTML {
 
 // func (g *Game) expandProduction(c *gin.Context) (tmpl string, err error) {
 func (g *Game) expandProduction(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a, com, err := g.validateExpandProduction(c, cu)
 	if err != nil {
@@ -647,8 +647,8 @@ func (p *Player) RemainingExpansions() int {
 
 // func (g *Game) validateExpandProduction(c *gin.Context) (a *Area, c *Company, err error) {
 func (g *Game) validateExpandProduction(c *gin.Context, cu *user.User) (*Area, *Company, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	cp := g.CurrentPlayer()
 	a, com, err := g.SelectedArea(), g.SelectedCompany(), g.validatePlayerAction(cu)
@@ -704,8 +704,8 @@ func (e *expandProductionEntry) HTML(c *gin.Context) (s template.HTML) {
 
 // func (g *Game) expandShipping(c *gin.Context) (tmpl string, err error) {
 func (g *Game) expandShipping(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a, com, err := g.validateExpandShipping(c, cu)
 	if err != nil {
@@ -729,8 +729,8 @@ func (g *Game) expandShipping(c *gin.Context, cu *user.User) (string, error) {
 
 // func (g *Game) validateExpandShipping(c *gin.Context) (a *Area, c *Company, err error) {
 func (g *Game) validateExpandShipping(c *gin.Context, cu *user.User) (*Area, *Company, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a := g.SelectedArea()
 	com := g.SelectedCompany()
@@ -797,8 +797,8 @@ func (p *Player) CanFreeExpansion() bool {
 
 // func (g *Game) acceptProposedFlow(c *gin.Context) (tmpl string, act game.ActionType, err error) {
 func (g *Game) acceptProposedFlow(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.validateAcceptProposedFlow(c, cu)
 	if err != nil {
@@ -829,8 +829,8 @@ func (g *Game) acceptProposedFlow(c *gin.Context, cu *user.User) (string, game.A
 
 // func (g *Game) validateAcceptProposedFlow(c *gin.Context) (c *Company, err error) {
 func (g *Game) validateAcceptProposedFlow(c *gin.Context, cu *user.User) (*Company, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {

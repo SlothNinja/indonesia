@@ -20,10 +20,10 @@ func init() {
 	gob.Register(new(startEntry))
 }
 
-func (client Client) Register(t gtype.Type, r *gin.Engine) *gin.Engine {
+func (client *Client) register(t gtype.Type) *Client {
 	gob.Register(new(Game))
 	game.Register(t, newGamer, PhaseNames, nil)
-	return client.addRoutes(t.Prefix(), r)
+	return client.addRoutes(t.Prefix())
 }
 
 var ErrMustBeGame = errors.New("Resource must have type *Game.")
@@ -168,9 +168,9 @@ func (g *Game) setPlayers(players Players) {
 
 type Games []*Game
 
-func (client Client) Start(c *gin.Context, g *Game) error {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) Start(c *gin.Context, g *Game) error {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Status = game.Running
 	g.Version = 2
@@ -231,9 +231,9 @@ func (e *setupEntry) HTML(c *gin.Context) template.HTML {
 	return restful.HTML("%s received 100 rupiah and 3 city cards.", g.NameByPID(e.PlayerID))
 }
 
-func (client Client) start(c *gin.Context, g *Game) error {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) start(c *gin.Context, g *Game) error {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = StartGame
 	g.newStartEntry()
@@ -307,8 +307,8 @@ func (g *Game) PlayerByIndex(index int) (player *Player) {
 }
 
 func (g *Game) undoAction(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	tmpl, err := g.undoRedoReset(c, cu, "%s undid action.")
 	if err != nil {
@@ -318,8 +318,8 @@ func (g *Game) undoAction(c *gin.Context, cu *user.User) (string, game.ActionTyp
 }
 
 func (g Game) redoAction(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	tmpl, err := g.undoRedoReset(c, cu, "%s redid action.")
 	if err != nil {
@@ -329,8 +329,8 @@ func (g Game) redoAction(c *gin.Context, cu *user.User) (string, game.ActionType
 }
 
 func (g *Game) resetTurn(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	tmpl, err := g.undoRedoReset(c, cu, "%s reset turn.")
 	if err != nil {
@@ -340,8 +340,8 @@ func (g *Game) resetTurn(c *gin.Context, cu *user.User) (string, game.ActionType
 }
 
 func (g *Game) undoRedoReset(c *gin.Context, cu *user.User, fmt string) (tmpl string, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	cp := g.CurrentPlayer()
 	if !g.IsCurrentPlayer(cu) {
@@ -361,8 +361,8 @@ func (g *Game) CurrentPlayer() *Player {
 }
 
 func (g *Game) adminHeader(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	h := struct {
 		Title         string           `form:"title"`
@@ -412,8 +412,8 @@ func (g *Game) adminHeader(c *gin.Context, cu *user.User) (string, game.ActionTy
 }
 
 func (g *Game) adminCities(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	form := struct {
 		CityStones []int `form:"city-stones"`

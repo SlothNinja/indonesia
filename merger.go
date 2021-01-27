@@ -21,8 +21,8 @@ func init() {
 }
 
 func (g *Game) startMergers(c *gin.Context, cu *user.User) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = Mergers
 	g.setCurrentPlayers(g.Players()[0])
@@ -52,8 +52,8 @@ func (g *Game) startMergers(c *gin.Context, cu *user.User) {
 }
 
 func (g *Game) selectCompany1(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.validateSelectCompany1(c, cu)
 	if err != nil {
@@ -76,8 +76,8 @@ func (g *Game) selectCompany1(c *gin.Context, cu *user.User) (string, error) {
 }
 
 func (g *Game) validateSelectCompany1(c *gin.Context, cu *user.User) (*Company, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
@@ -140,8 +140,8 @@ func (e *announceMergerEntry) HTML(c *gin.Context) (s template.HTML) {
 }
 
 func (g *Game) selectCompany2(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.validateSelectCompany2(c, cu)
 	if err != nil {
@@ -156,8 +156,8 @@ func (g *Game) selectCompany2(c *gin.Context, cu *user.User) (string, error) {
 }
 
 func (g *Game) validateSelectCompany2(c *gin.Context, cu *user.User) (*Company, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	com, err := g.SelectedCompany(), g.validatePlayerAction(cu)
 	switch {
@@ -175,8 +175,8 @@ func (g *Game) validateSelectCompany2(c *gin.Context, cu *user.User) (*Company, 
 }
 
 func (g *Game) mergerBid(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var bid int
 	if bid, err = g.validateMergerBid(c, cu); err != nil {
@@ -203,8 +203,8 @@ func (p *Player) CanBidNone() bool {
 }
 
 func (g *Game) validateMergerBid(c *gin.Context, cu *user.User) (bid int, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	bid = NoBid
 	if err = g.validatePlayerAction(cu); err != nil {
@@ -555,8 +555,8 @@ func (p *Player) owns(c *Company) bool {
 }
 
 func (g *Game) startMergerResolution(c *gin.Context, cu *user.User) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = Mergers
 	g.SubPhase = MResolution
@@ -678,8 +678,8 @@ func (e *mergerResolutionEntry) HTML(c *gin.Context) (s template.HTML) {
 }
 
 func (g *Game) siapFajiCreation(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.SubPhase = MSiapFajiCreation
 	owner := g.SiapFajiMerger.owner()
@@ -699,8 +699,8 @@ func (p *Player) CanCreateSiapFaji() bool {
 }
 
 func (m *SiapFajiMerger) removeAreasAdjacentCompetitor() {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	comp := m.Company()
 	if comp == nil {
@@ -714,8 +714,8 @@ func (m *SiapFajiMerger) removeAreasAdjacentCompetitor() {
 }
 
 func (g *Game) removeRiceSpice(c *gin.Context, cu *user.User) (string, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	m, a, err := g.validateRemoveRiceSpice(c, cu)
 	if err != nil {
@@ -755,8 +755,8 @@ func (comp *Company) toSiapFaji() {
 }
 
 func (g *Game) validateRemoveRiceSpice(c *gin.Context, cu *user.User) (*SiapFajiMerger, *Area, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	m, a, err := g.SiapFajiMerger, g.SelectedArea(), g.validatePlayerAction(cu)
 	switch {

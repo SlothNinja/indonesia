@@ -18,8 +18,8 @@ func init() {
 }
 
 func (g *Game) pass(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validatePass(c, cu); err != nil {
 		log.Errorf(err.Error())
@@ -40,8 +40,8 @@ func (g *Game) pass(c *gin.Context, cu *user.User) (tmpl string, act game.Action
 }
 
 func (g *Game) validatePass(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validatePlayerAction(cu); err != nil {
 		return

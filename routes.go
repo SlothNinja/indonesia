@@ -3,40 +3,39 @@ package indonesia
 import (
 	"cloud.google.com/go/datastore"
 	"github.com/SlothNinja/game"
+	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/mlog"
 	"github.com/SlothNinja/rating"
+	"github.com/SlothNinja/sn"
 	gtype "github.com/SlothNinja/type"
 	"github.com/SlothNinja/user"
-	stats "github.com/SlothNinja/user-stats"
 	"github.com/gin-gonic/gin"
 	"github.com/patrickmn/go-cache"
 )
 
 type Client struct {
-	DS     *datastore.Client
-	User   user.Client
-	Stats  stats.Client
-	MLog   mlog.Client
-	Game   game.Client
-	Rating rating.Client
-	Cache  *cache.Cache
+	*sn.Client
+	User   *user.Client
+	Game   *game.Client
+	MLog   *mlog.Client
+	Rating *rating.Client
 }
 
-func NewClient(dsClient *datastore.Client, userClient user.Client, mcache *cache.Cache) Client {
-	return Client{
-		DS:     dsClient,
-		User:   userClient,
-		Stats:  stats.NewClient(userClient, dsClient),
-		MLog:   mlog.NewClient(userClient, dsClient),
-		Game:   game.NewClient(userClient, dsClient),
-		Rating: rating.NewClient(userClient, dsClient),
-		Cache:  mcache,
+func NewClient(dClient *datastore.Client, uClient *user.Client, gClient *game.Client, mClient *mlog.Client,
+	rClient *rating.Client, logger *log.Logger, cache *cache.Cache, router *gin.Engine, t gtype.Type) *Client {
+	client := &Client{
+		Client: sn.NewClient(dClient, logger, cache, router),
+		User:   uClient,
+		Game:   gClient,
+		MLog:   mClient,
+		Rating: rClient,
 	}
+	return client.register(t)
 }
 
-func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
+func (client *Client) addRoutes(prefix string) *Client {
 	// Game group
-	g := engine.Group(prefix + "/game")
+	g := client.Router.Group(prefix + "/game")
 
 	// New
 	g.GET("/new",
@@ -51,7 +50,6 @@ func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 	// Show
 	g.GET("/show/:hid",
 		client.fetch,
-		client.MLog.Get,
 		game.SetAdmin(false),
 		client.show(prefix),
 	)
@@ -65,7 +63,7 @@ func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 	// Finish
 	g.POST("/finish/:hid",
 		client.fetch,
-		client.Stats.Fetch,
+		client.User.StatsFetch,
 		client.finish(prefix),
 	)
 
@@ -90,12 +88,13 @@ func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 
 	// Add Message
 	g.PUT("/show/:hid/addmessage",
-		client.MLog.Get,
-		client.MLog.AddMessage(prefix),
+		client.fetch,
+		game.SetAdmin(false),
+		client.addMessage(prefix),
 	)
 
 	// Games group
-	gs := engine.Group(prefix + "/games")
+	gs := client.Router.Group(prefix + "/games")
 
 	// Index
 	gs.GET("/:status",
@@ -114,7 +113,6 @@ func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 	// Admin
 	admin.GET("/:hid",
 		client.fetch,
-		client.MLog.Get,
 		game.SetAdmin(true),
 		client.show(prefix),
 	)
@@ -132,6 +130,6 @@ func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 		client.update(prefix),
 	)
 
-	return engine
+	return client
 
 }

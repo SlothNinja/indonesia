@@ -10,7 +10,6 @@ import (
 	"github.com/SlothNinja/color"
 	"github.com/SlothNinja/contest"
 	"github.com/SlothNinja/game"
-	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
@@ -78,19 +77,19 @@ func (p *Player) compareByScore(player *Player) game.Comparison {
 	return game.EqualTo
 }
 
-func (client Client) determinePlaces(c *gin.Context, g *Game) (contest.Places, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) determinePlaces(c *gin.Context, g *Game) ([]contest.ResultsMap, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	// sort players by score
 	players := g.Players()
 	sort.Stable(Reverse{ByScore{players}})
 	g.setPlayers(players)
 
-	places := make(contest.Places, 0)
+	places := make([]contest.ResultsMap, 0)
 	for i, p1 := range g.Players() {
 		rmap := make(contest.ResultsMap, 0)
-		results := make(contest.Results, 0)
+		results := make([]*contest.Result, 0)
 		for j, p2 := range g.Players() {
 			r, err := client.Rating.For(c, p2.User(), g.Type)
 			if err != nil {

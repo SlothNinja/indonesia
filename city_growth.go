@@ -27,9 +27,9 @@ func init() {
 
 type cityGrowthMap map[int]Cities
 
-func (client Client) startCityGrowth(c *gin.Context, g *Game) (contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) startCityGrowth(c *gin.Context, g *Game) ([]*contest.Contest, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = CityGrowth
 	g.setCurrentPlayers(g.Players()[0])
@@ -161,8 +161,8 @@ func (e *deliveredGoodsEntry) HTML(c *gin.Context) (s template.HTML) {
 }
 
 func (g *Game) cityGrowth(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var cs Cities
 
@@ -180,8 +180,8 @@ func (g *Game) cityGrowth(c *gin.Context, cu *user.User) (tmpl string, act game.
 }
 
 func (g *Game) validateCityGrowth(c *gin.Context, cu *user.User) (cs Cities, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	cmap := g.CityGrowthMap()
 	for size, cities := range cmap {

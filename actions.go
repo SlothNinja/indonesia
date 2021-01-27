@@ -7,8 +7,8 @@ import (
 )
 
 func (g *Game) validatePlayerAction(cu *user.User) error {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	cp := g.CurrentPlayer()
 	switch {
@@ -22,8 +22,8 @@ func (g *Game) validatePlayerAction(cu *user.User) error {
 }
 
 func (g *Game) validateAdminAction(cu *user.User) error {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	switch {
 	case cu == nil, !cu.IsAdmin():

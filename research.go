@@ -55,8 +55,8 @@ func (p *Player) Expansions() int {
 }
 
 func (g *Game) startResearch(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = Research
 	g.beginningOfPhaseReset()
@@ -64,8 +64,8 @@ func (g *Game) startResearch(c *gin.Context) {
 }
 
 func (g *Game) conductResearch(c *gin.Context, cu *user.User) (tmpl string, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var tech Technology
 
@@ -91,8 +91,8 @@ func (g *Game) conductResearch(c *gin.Context, cu *user.User) (tmpl string, err 
 }
 
 func (g *Game) validateConductResearch(cu *user.User) (Technology, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	cp, tech, err := g.CurrentPlayer(), g.SelectedTechnology, g.validatePlayerAction(cu)
 	switch {
@@ -143,8 +143,8 @@ func (e *researchEntry) HTML(c *gin.Context) (s template.HTML) {
 }
 
 func (g *Game) selectHullPlayer(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var p *Player
 
@@ -170,8 +170,8 @@ func (g *Game) selectHullPlayer(c *gin.Context, cu *user.User) (tmpl string, act
 }
 
 func (g *Game) validateSelectHullPlayer(c *gin.Context, cu *user.User) (*Player, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if !g.IsCurrentPlayer(cu) {
 		return nil, sn.NewVError("Only the current player can perform an action.")

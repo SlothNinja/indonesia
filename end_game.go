@@ -7,7 +7,6 @@ import (
 
 	"github.com/SlothNinja/contest"
 	"github.com/SlothNinja/game"
-	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/send"
 	"github.com/gin-gonic/gin"
@@ -21,9 +20,9 @@ func init() {
 	gob.Register(new(doubleFinalIncomeEntry))
 }
 
-func (client Client) endGame(c *gin.Context, g *Game) (contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) endGame(c *gin.Context, g *Game) ([]*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 	g.Phase = EndGame
 
 	g.doubleFinalIncome()

@@ -16,9 +16,9 @@ func init() {
 	gob.Register(new(endGameTriggeredEntry))
 }
 
-func (client Client) startNewEra(c *gin.Context, g *Game) (contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) startNewEra(c *gin.Context, g *Game) ([]*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	g.Phase = NewEra
 	g.Turn += 1
@@ -36,9 +36,9 @@ func (client Client) startNewEra(c *gin.Context, g *Game) (contest.Contests, err
 //	}
 //}
 
-func (client Client) checkForNewEra(c *gin.Context, g *Game) (contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) checkForNewEra(c *gin.Context, g *Game) ([]*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	g.AvailableDeeds = g.AvailableDeeds.RemoveUnstartable(g)
 	switch n := g.AvailableDeeds.Types(); {
@@ -59,8 +59,8 @@ func (client Client) checkForNewEra(c *gin.Context, g *Game) (contest.Contests, 
 }
 
 func (g *Game) startNewCity(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 }
 
 type newEraEntry struct {
