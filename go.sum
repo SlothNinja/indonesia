@@ -78,6 +78,8 @@ github.com/SlothNinja/mlog v1.0.3 h1:6QZup4L4dczvchyjqPmnEZbZfbuMmrl/vLItKnQp4Gc
 github.com/SlothNinja/mlog v1.0.3/go.mod h1:Zq5JqVl0KamWtTb5RSUdYiM7O/nciwo4GDtg6tGTJoI=
 github.com/SlothNinja/rating v1.0.6 h1:swKz8ohcHrEawDntBZNbH0I7J+2Qmo8VJMq6wtZDWd0=
 github.com/SlothNinja/rating v1.0.6/go.mod h1:Nsqcvx6OqVD9nzuizmuGrdYHACmprsVDu8FfuTuyELE=
+github.com/SlothNinja/rating v1.0.7 h1:m3/dstqJMs6CcEcevZaoNaDYh4za/RgH12Ibv+x2Mq0=
+github.com/SlothNinja/rating v1.0.7/go.mod h1:Nsqcvx6OqVD9nzuizmuGrdYHACmprsVDu8FfuTuyELE=
 github.com/SlothNinja/restful v1.0.0 h1:Qcozj0/B5wLSAOec2qqphCXmAiBW3yr3LzEcYEaJBFA=
 github.com/SlothNinja/restful v1.0.0/go.mod h1:0Pm+cPyoDezRedyM2X9rmP9l/sg1rgYKTaKnw1wRj9A=
 github.com/SlothNinja/send v1.0.0 h1:uowNL42qqifOIgBHO9xVumcCND6O4saizsJFv+HOXpc=
