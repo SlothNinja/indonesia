@@ -173,12 +173,12 @@ func newPlayer() *Player {
 	return p
 }
 
-func (g *Game) addNewPlayer(u *user.User) {
-	p := CreatePlayer(g, u)
+func (g *Game) addNewPlayer() {
+	p := CreatePlayer(g)
 	g.Playerers = append(g.Playerers, p)
 }
 
-func CreatePlayer(g *Game, u *user.User) *Player {
+func CreatePlayer(g *Game) *Player {
 	p := newPlayer()
 	p.SetID(int(len(g.Players())))
 	p.SetGame(g)
